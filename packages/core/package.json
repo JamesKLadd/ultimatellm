@@ -1,0 +1,26 @@
+{
+  "name": "@ultimatellm/core",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "The orchestrator: picks the manager and models, runs replies with failover, saves chats.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ultimatellm/accounts": "workspace:*",
+    "@ultimatellm/db": "workspace:*",
+    "@ultimatellm/providers": "workspace:*",
+    "@ultimatellm/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

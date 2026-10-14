@@ -1,5 +1,25 @@
 import { z } from 'zod';
+import {
+  AccountIdInput,
+  AddApiKeyInput,
+  ReorderAccountsInput,
+  type AccountSummary,
+  type AddAccountResult,
+  type ManagerStatus,
+} from './accounts';
+import {
+  ChatIdInput,
+  RunIdInput,
+  SendMessageInput,
+  type ChatRunEvent,
+  type ChatSummary,
+  type ChatWithMessages,
+  type DataScope,
+  type SendMessageResult,
+} from './chats';
 import { EventChannel, InvokeChannel } from './ipc-channels';
+import { ManagerPriority } from './orchestration';
+import type { ProviderId } from './providers';
 import { ThemePreference } from './settings';
 
 export const AppInfo = z.object({
@@ -11,12 +31,20 @@ export const AppInfo = z.object({
     chrome: z.string(),
     node: z.string(),
   }),
+  /** True when offline mock providers stand in for the real APIs (dev/test builds only). */
+  mockProviders: z.boolean(),
 });
 export type AppInfo = z.infer<typeof AppInfo>;
 
 /** Commands the main process sends to the UI, e.g. from the app menu or a shortcut. */
 export const AppCommand = z.enum(['new-chat', 'open-settings', 'toggle-sidebar']);
 export type AppCommand = z.infer<typeof AppCommand>;
+
+/**
+ * Typed placeholder for outputs: the main process is trusted, so its results
+ * aren't re-validated at runtime; the schema only carries the type.
+ */
+const output = <T>() => z.custom<T>(() => true);
 
 /**
  * Renderer → main calls. The main process validates every input against these
@@ -27,6 +55,21 @@ export const invokeContract = {
   [InvokeChannel.appGetInfo]: { input: z.undefined(), output: AppInfo },
   [InvokeChannel.settingsGetTheme]: { input: z.undefined(), output: ThemePreference },
   [InvokeChannel.settingsSetTheme]: { input: ThemePreference, output: z.undefined() },
+
+  [InvokeChannel.accountsList]: { input: z.undefined(), output: output<AccountSummary[]>() },
+  [InvokeChannel.accountsAdd]: { input: AddApiKeyInput, output: output<AddAccountResult>() },
+  [InvokeChannel.accountsRemove]: { input: AccountIdInput, output: z.undefined() },
+  [InvokeChannel.accountsReorder]: { input: ReorderAccountsInput, output: z.undefined() },
+  [InvokeChannel.accountsRecheck]: { input: AccountIdInput, output: output<AccountSummary>() },
+
+  [InvokeChannel.managerStatus]: { input: z.undefined(), output: output<ManagerStatus>() },
+  [InvokeChannel.managerSetOrder]: { input: ManagerPriority, output: z.undefined() },
+
+  [InvokeChannel.chatsList]: { input: z.undefined(), output: output<ChatSummary[]>() },
+  [InvokeChannel.chatsGet]: { input: ChatIdInput, output: output<ChatWithMessages | null>() },
+  [InvokeChannel.chatsSend]: { input: SendMessageInput, output: output<SendMessageResult>() },
+  [InvokeChannel.chatsStop]: { input: RunIdInput, output: z.undefined() },
+  [InvokeChannel.chatsRemove]: { input: ChatIdInput, output: z.undefined() },
 } as const satisfies Record<string, { input: z.ZodType; output: z.ZodType }>;
 
 export type InvokeChannelName = keyof typeof invokeContract;
@@ -43,10 +86,14 @@ export type InvokeOutput<C extends InvokeChannelName> = z.output<
 /** Main → renderer event payloads. */
 export const eventContract = {
   [EventChannel.appCommand]: AppCommand,
+  [EventChannel.chatRun]: output<ChatRunEvent>(),
+  [EventChannel.dataChanged]: output<DataScope>(),
 } as const satisfies Record<string, z.ZodType>;
 
 export type EventChannelName = keyof typeof eventContract;
 export type EventPayload<C extends EventChannelName> = z.output<(typeof eventContract)[C]>;
+
+type Unsubscribe = () => void;
 
 /** The API the preload script exposes to the UI as `window.ull`. */
 export interface UllApi {
@@ -55,10 +102,31 @@ export interface UllApi {
   app: {
     getInfo(): Promise<AppInfo>;
     /** Subscribes to app commands. Returns an unsubscribe function. */
-    onCommand(listener: (command: AppCommand) => void): () => void;
+    onCommand(listener: (command: AppCommand) => void): Unsubscribe;
+    /** Fires when data changes in the main process, so the UI can refresh it. */
+    onDataChanged(listener: (scope: DataScope) => void): Unsubscribe;
   };
   settings: {
     getTheme(): Promise<ThemePreference>;
     setTheme(theme: ThemePreference): Promise<void>;
+  };
+  accounts: {
+    list(): Promise<AccountSummary[]>;
+    add(input: z.input<typeof AddApiKeyInput>): Promise<AddAccountResult>;
+    remove(id: string): Promise<void>;
+    reorder(provider: ProviderId, ids: string[]): Promise<void>;
+    recheck(id: string): Promise<AccountSummary>;
+  };
+  manager: {
+    status(): Promise<ManagerStatus>;
+    setOrder(order: ProviderId[]): Promise<void>;
+  };
+  chats: {
+    list(): Promise<ChatSummary[]>;
+    get(id: string): Promise<ChatWithMessages | null>;
+    send(input: z.input<typeof SendMessageInput>): Promise<SendMessageResult>;
+    stop(runId: string): Promise<void>;
+    remove(id: string): Promise<void>;
+    onRunEvent(listener: (event: ChatRunEvent) => void): Unsubscribe;
   };
 }

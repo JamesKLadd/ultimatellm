@@ -1,0 +1,25 @@
+{
+  "name": "@ultimatellm/accounts",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Provider accounts: secure key storage, validation, priority lists and health (rate limits, failures).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ultimatellm/db": "workspace:*",
+    "@ultimatellm/providers": "workspace:*",
+    "@ultimatellm/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
