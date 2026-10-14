@@ -70,6 +70,17 @@ Each mode is a set of weights given to the planner and used by the code-side val
 | Best | **high** | low | low | Frontier models, high effort. More verification subtasks allowed. |
 | Fastest | medium | low | **high** | Low-latency models, low/no reasoning effort. Maximum parallelism. Fewer dependent steps. |
 
+**Direct answers (milestone 1a).** Before planning exists, the manager provider answers each prompt itself, with the model and effort picked from the output mode (`OUTPUT_MODE_SETTINGS` in `packages/core`):
+
+| Mode | Model tier | Effort | Example (Anthropic) |
+| --- | --- | --- | --- |
+| Cheapest | fast | low | Claude Haiku 5.5 |
+| Balanced | balanced | medium | Claude Sonnet 5.5 |
+| Best | best | high | Claude Opus 5.5 |
+| Fastest | fast | none | Claude Haiku 5.5 |
+
+If the account can't use that model (e.g. a free-tier key), the next tier down is tried.
+
 ### Plan modes
 - **Auto:** the plan runs immediately. It still appears in a collapsible "Plan" panel.
 - **Review:** the plan card shows subtasks, models, effort, rationale and the cost/time estimate. The user can change the model or effort (dropdowns limited to available models), edit a subtask prompt, add or delete subtasks, then press **Run**.

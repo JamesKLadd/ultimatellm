@@ -70,9 +70,9 @@ ultimatellm/
 │  ├─ shared/             types, Zod schemas, IPC contract, settings definitions
 │  ├─ db/                 Drizzle schema, migrations, data access (local SQLite)
 │  ├─ ui/                 shared React components + design tokens (reusable for web/mobile later)
-│  ├─ core/               (planned) orchestrator: planner, executor, compiler (no Electron deps)
-│  ├─ providers/          (planned) adapter per provider + shared ProviderAdapter interface
-│  ├─ accounts/           (planned) account pool, priority, failover, usage tracking
+│  ├─ core/               orchestrator: manager selection, replies with failover (planner/executor in 1b)
+│  ├─ providers/          adapter per provider (AI SDK), error classification, model registry, mock provider
+│  ├─ accounts/           encrypted keys, validation, priority lists, account health
 │  ├─ registry/           (planned) model knowledge base schema + bundled snapshot
 │  └─ agent/              (planned) coding-agent loop + tools (fs, shell, git) + permission engine
 └─ docs/

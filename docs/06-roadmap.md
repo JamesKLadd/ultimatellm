@@ -13,20 +13,34 @@ Each phase ends with something usable. No dates; quality over speed.
 - **Exit:** an empty app shell that builds and runs on Windows and macOS, with CI green.
 
 ## Phase 1 – v1 MVP: multi-provider chat with the manager
-- UltimateLLM account sign-in (Supabase Auth).
-- Provider accounts for **xAI, OpenAI, Anthropic, Google**: API keys for all four, plus **Continue with ChatGPT** (plan usage) for OpenAI. Priority list UI. Failover, with opt-in plan → API-key fallback. Spend caps. Health checks.
-- Onboarding: connect at least one provider (any). Explain plan-included API credits (Claude Max, Google AI Pro/Ultra) and the free Gemini API tier.
+
+Delivered in milestones, each one testable on its own.
+
+### 1a – Chat with your own accounts ✅
+- API-key accounts for **xAI, Anthropic, OpenAI, Google**: checked against the provider when added, encrypted with the OS keychain, several per provider with a priority order.
+- Account health: rate-limited / out-of-credit accounts pause and come back on their own; rejected keys wait for "Check again".
 - Manager order setting (default xAI → Anthropic → OpenAI → Google) and a "Manager: …" indicator ([D-009](decisions.md)).
-- **Development mock provider** (dev builds only): fake models with scripted responses, so the whole flow can be tried without any accounts. The end-to-end tests use it too.
-- Model registry v1 (bundled snapshot + remote update) for the four providers.
-- The manager: triage → plan → DAG executor → compile, with all **4 output modes** and both **plan modes** (Auto / Review), user overrides, fallback to the next provider in the manager order.
-- Chat UI: sidebar, conversation, composer with mode pickers, **live model activity strip**, plan card, sources panel, cost/token display.
-- Chat kinds: cloud, local, private.
-- Usage page per account.
-- Basic library: auto-save generated images. Save docs. List + tags + search. Cloud sync.
-- Image generation through the planner.
-- Command palette and more keyboard shortcuts (light/dark theme and basic shortcuts shipped in Phase 0).
-- **Exit:** daily use as the main AI app.
+- **Direct answers:** the manager provider answers each prompt itself, with its model picked by output mode (fast / balanced / best tier + reasoning effort). Failover goes to the next model, then the next account, then the next provider in the manager order.
+- Streaming chat UI: conversation with Markdown, live activity strip, Stop, local chat history in the sidebar.
+- **Mock providers** for development and tests (`pnpm dev:mock`): offline models with scripted replies ([D-010](decisions.md)).
+
+### 1b – The real manager: planning and routing
+- Model registry v1 (pricing, speed, per-task scores; bundled + remote update).
+- Triage → plan → DAG executor → compile, with all **4 output modes** and both **plan modes** (Auto / Review plan card), user overrides (`@claude`).
+- Activity strip with one status bar per active model, sources panel, cost/token display.
+
+### 1c – Plans, limits and usage
+- **Continue with ChatGPT** (plan usage) for OpenAI, with opt-in plan → API-key fallback.
+- Spend caps per account, health checks, usage page per account.
+
+### 1d – UltimateLLM accounts and sync
+- UltimateLLM sign-in (Supabase Auth). Chat kinds: cloud, local, private.
+
+### 1e – Library and images
+- Image generation through the planner. Library: auto-save images, save docs, tags + search, cloud sync.
+- Command palette and more keyboard shortcuts.
+
+**Phase 1 exit:** daily use as the main AI app.
 
 ## Phase 2 – Local projects & coding agent
 - Local projects: folder, instructions, memory, files.

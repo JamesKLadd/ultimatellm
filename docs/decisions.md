@@ -4,6 +4,16 @@ Short records of technical decisions: what was chosen, why, and what would make 
 
 ---
 
+### D-010 · Key storage and mock providers (2026-10-14)
+**Decision:**
+- API keys are encrypted with Electron `safeStorage` (Keychain on macOS, DPAPI on Windows, libsecret/KWallet on Linux). They're stored in a separate `account_secrets` table and are only decrypted in the main process when a request needs them. The UI only ever sees a hint like "…a1b2".
+- On Linux without a keyring, keys fall back to Chromium's weak "basic text" protection, with a warning in the log. Linux isn't a release target yet.
+- **Mock providers** stand in for all four providers when the app is started with `--mock-providers` (`pnpm dev:mock`, end-to-end tests). They make no network calls, and the API key controls their behavior (`invalid…`, `ratelimited…`, `revoked…`). They're impossible to enable in a packaged app.
+
+**Why:**
+- Keys never touch the renderer or plain-text storage.
+- Development and CI can exercise the whole flow (accounts, failover, streaming, persistence) without real keys or cost.
+
 ### D-009 · Any provider can manage; xAI is optional (2026-10-14)
 **Decision:** No provider is required. The manager is the first provider in the user's **manager order** that has a usable account. The default order is xAI (Grok bot) → Anthropic (Claude) → OpenAI (ChatGPT) → Google (Gemini), and the user can change it. The same list is the fallback order when the active manager fails. This replaces the separate "backup manager".
 **Where:** `rankManagers()` and `DEFAULT_MANAGER_PRIORITY` in `packages/shared/src/orchestration.ts`. The setting is `orchestration.managerPriority`.

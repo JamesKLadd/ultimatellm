@@ -2,7 +2,7 @@
 
 A desktop app (Windows and macOS first) that brings all of your AI providers into one place. A **manager** AI splits each prompt into subtasks, sends each one to the best model you have access to, runs them in parallel and combines the results into one answer. The manager is **Grok bot** by default. Without an xAI account, Claude, ChatGPT or Gemini takes the role, in that order. No particular provider is required.
 
-> **Status:** Phase 0 (foundations) is done. The app shell runs on Windows and macOS with a secure Electron setup, a local database and CI. Provider accounts and the manager come in Phase 1. See the [roadmap](docs/06-roadmap.md).
+> **Status:** Phase 1, milestone 1a is done: add your API keys, and chat with streamed answers from the manager provider, with automatic failover between accounts and providers. Planning across several models comes next (1b). See the [roadmap](docs/06-roadmap.md).
 
 ## Getting started
 
@@ -16,6 +16,7 @@ pnpm dev            # run the app with hot reload
 | Command | What it does |
 | --- | --- |
 | `pnpm dev` | Starts the app in development mode. UI changes reload instantly; main-process changes restart the app. |
+| `pnpm dev:mock` | Same, but with offline **mock providers** instead of the real AIs: any key works (except ones starting with `invalid`), nothing is billed. |
 | `pnpm build` | Builds the app into `apps/desktop/out/`. |
 | `pnpm test` | Unit tests (Vitest) for all packages. |
 | `pnpm test:e2e` | End-to-end tests (Playwright) against the built app. Run `pnpm build` first. |
@@ -23,6 +24,8 @@ pnpm dev            # run the app with hot reload
 | `pnpm package` | Builds an unsigned installer for your OS into `apps/desktop/release/`. |
 | `pnpm db:generate` | After changing `packages/db/src/schema.ts`, generates the SQL migration. Commit it. |
 | `pnpm format` | Fixes formatting with Prettier. |
+
+**Trying it with real AIs:** open *Settings → Accounts* and add an API key. A free [Google AI Studio](https://aistudio.google.com/app/apikey) key is enough to start; Gemini then acts as the manager until you add keys for providers higher in the manager order (Grok, Claude, ChatGPT).
 
 Development builds keep their data in a separate folder (`UltimateLLM-dev` in your OS's app-data directory), so they never touch an installed copy's data.
 
@@ -35,6 +38,9 @@ Development builds keep their data in a separate folder (`UltimateLLM-dev` in yo
 ```
 apps/desktop/        Electron app: main process, preload, React UI, e2e tests, packaging config
 packages/shared/     IPC contract, Zod schemas, settings definitions (shared by main + UI)
+packages/providers/  AI provider adapters (Vercel AI SDK), error classification, model registry, mock provider
+packages/accounts/   Provider accounts: encrypted keys, validation, priority, health
+packages/core/       The orchestrator: picks the manager and models, streams replies with failover
 packages/db/         Local SQLite database: Drizzle schema, migrations, data access
 packages/ui/         Shared React components (shadcn/ui style) and design tokens
 docs/                Product and design docs

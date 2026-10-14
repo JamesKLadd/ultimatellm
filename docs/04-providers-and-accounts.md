@@ -42,15 +42,15 @@ type ErrorClass =
 ```mermaid
 stateDiagram-v2
   [*] --> active
-  active --> cooling: rate_limited (until Retry-After)
-  cooling --> active: cooldown elapsed
-  active --> exhausted: quota_exhausted / spend cap hit
-  exhausted --> active: reset period / user tops up
-  active --> broken: auth_invalid / repeated failures
-  broken --> active: user re-authenticates / health check passes
-  active --> disabled: user toggles off
-  disabled --> active: user toggles on
+  active --> rate_limited: 429 (paused for Retry-After, default 60 s)
+  rate_limited --> active: pause over / next success
+  active --> quota_exhausted: out of credit or plan allowance (paused 15 min)
+  quota_exhausted --> active: pause over / next success / "Check again"
+  active --> auth_invalid: key rejected (401/403)
+  auth_invalid --> active: "Check again" succeeds
 ```
+
+Implemented in `packages/accounts` (milestone 1a). Spend caps and a user "disable" toggle come in milestone 1c.
 
 **Choosing an account for a request:** take the provider's accounts in the user's priority order and pick the first that is `active`, under its spend cap, and has room under its concurrency limit. If the chosen one fails with `rate_limited`, `quota_exhausted`, `auth_invalid` or exhausted `server_error` retries, mark it, pick the next, and resend. The user sees "switched to <account label>" on that subtask's status bar.
 
