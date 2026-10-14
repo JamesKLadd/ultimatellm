@@ -1,11 +1,17 @@
 import { app, ipcMain, type IpcMainInvokeEvent } from 'electron';
+import type { AccountService } from '@ultimatellm/accounts';
+import type { ChatEngine } from '@ultimatellm/core';
 import type { SettingsStore } from '@ultimatellm/db';
 import {
   InvokeChannel,
   invokeContract,
+  rankManagers,
+  resolveManagerPriority,
+  type DataScope,
   type InvokeChannelName,
   type InvokeOutput,
   type InvokeParsedInput,
+  type ManagerStatus,
   type ThemePreference,
 } from '@ultimatellm/shared';
 import { isTrustedOrigin } from './security/policy';
@@ -36,11 +42,17 @@ function createHandle(trustedOrigins: readonly string[]) {
 export interface IpcDependencies {
   trustedOrigins: readonly string[];
   settings: SettingsStore;
+  accounts: AccountService;
+  engine: ChatEngine;
+  mockProviders: boolean;
   applyTheme: (theme: ThemePreference) => void;
+  /** Tells the UI that data changed so it can refresh. */
+  changed: (scope: DataScope) => void;
 }
 
-export function registerIpcHandlers({ trustedOrigins, settings, applyTheme }: IpcDependencies) {
-  const handle = createHandle(trustedOrigins);
+export function registerIpcHandlers(deps: IpcDependencies) {
+  const { settings, accounts, engine, changed } = deps;
+  const handle = createHandle(deps.trustedOrigins);
 
   handle(InvokeChannel.appGetInfo, () => ({
     name: app.getName(),
@@ -51,13 +63,66 @@ export function registerIpcHandlers({ trustedOrigins, settings, applyTheme }: Ip
       chrome: process.versions.chrome,
       node: process.versions.node,
     },
+    mockProviders: deps.mockProviders,
   }));
 
   handle(InvokeChannel.settingsGetTheme, () => settings.get('appearance.theme'));
-
   handle(InvokeChannel.settingsSetTheme, (theme) => {
     settings.set('appearance.theme', theme);
-    applyTheme(theme);
+    deps.applyTheme(theme);
+    return undefined;
+  });
+
+  // Accounts
+  handle(InvokeChannel.accountsList, () => accounts.list());
+  handle(InvokeChannel.accountsAdd, async (input) => {
+    const result = await accounts.addApiKey(input);
+    if (result.ok) changed('accounts');
+    return result;
+  });
+  handle(InvokeChannel.accountsRemove, ({ id }) => {
+    accounts.remove(id);
+    changed('accounts');
+    return undefined;
+  });
+  handle(InvokeChannel.accountsReorder, ({ provider, ids }) => {
+    accounts.reorder(provider, ids);
+    changed('accounts');
+    return undefined;
+  });
+  handle(InvokeChannel.accountsRecheck, async ({ id }) => {
+    const account = await accounts.recheck(id);
+    changed('accounts');
+    return account;
+  });
+
+  // Manager
+  handle(InvokeChannel.managerStatus, (): ManagerStatus => {
+    const saved = settings.get('orchestration.managerPriority');
+    const usable = accounts.usableProviders();
+    return {
+      manager: rankManagers(saved, usable)[0] ?? null,
+      order: resolveManagerPriority(saved),
+      usable,
+      configured: [...new Set(accounts.list().map((account) => account.provider))],
+    };
+  });
+  handle(InvokeChannel.managerSetOrder, (order) => {
+    settings.set('orchestration.managerPriority', order);
+    changed('accounts');
+    return undefined;
+  });
+
+  // Chats
+  handle(InvokeChannel.chatsList, () => engine.listChats());
+  handle(InvokeChannel.chatsGet, ({ id }) => engine.getChat(id));
+  handle(InvokeChannel.chatsSend, (input) => engine.send(input));
+  handle(InvokeChannel.chatsStop, ({ runId }) => {
+    engine.stop(runId);
+    return undefined;
+  });
+  handle(InvokeChannel.chatsRemove, ({ id }) => {
+    engine.removeChat(id);
     return undefined;
   });
 }

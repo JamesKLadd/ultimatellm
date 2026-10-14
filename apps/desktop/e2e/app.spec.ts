@@ -29,9 +29,12 @@ test.afterEach(() => {
   rmSync(userDataDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
 });
 
-async function launchApp(): Promise<{ app: ElectronApplication; page: Page }> {
+/** Launches the app. `mock` swaps the real AI providers for offline test models. */
+async function launchApp(
+  options: { mock?: boolean } = {},
+): Promise<{ app: ElectronApplication; page: Page }> {
   const app = await electron.launch({
-    args: [APP_DIR],
+    args: [APP_DIR, ...(options.mock ? ['--mock-providers'] : [])],
     env: { ...process.env, ULL_USER_DATA_DIR: userDataDir, ELECTRON_RENDERER_URL: '' },
     // Playwright turns these off by default; test the app as users run it.
     chromiumSandbox: !RUNNING_AS_ROOT,
@@ -137,12 +140,13 @@ test('navigates the shell and responds to menu commands', async () => {
     const dialog = page.getByRole('dialog', { name: 'Settings' });
     await expect(dialog).toBeVisible();
 
-    // The About section shows the app's own name/version (from package.json).
+    // The About tab shows the app's own name/version (from package.json).
     const { name, version } = await app.evaluate(({ app }) => ({
       name: app.getName(),
       version: app.getVersion(),
     }));
     expect(name).toBe('UltimateLLM');
+    await dialog.getByRole('button', { name: 'About' }).click();
     await expect(dialog.getByText(version, { exact: true })).toBeVisible();
   } finally {
     await app.close();
@@ -154,6 +158,7 @@ test('saves the theme in the local database across restarts', async () => {
   try {
     await first.page.getByRole('button', { name: 'Settings' }).click();
     const dialog = first.page.getByRole('dialog', { name: 'Settings' });
+    await dialog.getByRole('button', { name: 'Appearance' }).click();
     await dialog.getByRole('radio', { name: 'Dark' }).click();
     await expect.poll(() => prefersDark(first.page)).toBe(true);
   } finally {
@@ -166,7 +171,72 @@ test('saves the theme in the local database across restarts', async () => {
     expect(await second.app.evaluate(({ nativeTheme }) => nativeTheme.themeSource)).toBe('dark');
 
     await second.page.getByRole('button', { name: 'Settings' }).click();
+    await second.page.getByRole('button', { name: 'Appearance' }).click();
     await expect(second.page.getByRole('radio', { name: 'Dark' })).toBeChecked();
+  } finally {
+    await second.app.close();
+  }
+});
+
+async function addKey(page: Page, provider: string, apiKey: string, label: string) {
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await dialog.getByRole('button', { name: `Add ${provider} API key` }).click();
+  const form = dialog.getByRole('form', { name: `Add ${provider} API key` });
+  await form.getByLabel('Label (optional)').fill(label);
+  await form.getByLabel('API key', { exact: true }).fill(apiKey);
+  await form.getByRole('button', { name: 'Save key' }).click();
+}
+
+test('chats through the manager, fails over, and keeps everything after a restart', async () => {
+  const first = await launchApp({ mock: true });
+  try {
+    const { page } = first;
+    await expect(page.getByTestId('manager-chip')).toHaveText('No manager yet');
+    await page.getByRole('button', { name: 'Add an account' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Settings' });
+
+    // A key the provider rejects is not saved.
+    await dialog.getByRole('button', { name: 'Add Google API key' }).click();
+    const googleForm = dialog.getByRole('form', { name: 'Add Google API key' });
+    await googleForm.getByLabel('API key', { exact: true }).fill('invalid-google-key');
+    await googleForm.getByRole('button', { name: 'Save key' }).click();
+    await expect(googleForm.getByRole('alert')).toContainText("Google didn't accept this key");
+    await googleForm.getByRole('button', { name: 'Cancel' }).click();
+
+    // Claude comes before Gemini in the default manager order.
+    await addKey(page, 'Google', 'AIza-mock-personal', 'Personal');
+    await addKey(page, 'Anthropic', 'ratelimited-work-key', 'Work');
+    await expect(dialog.getByTestId('account-row')).toHaveCount(2);
+    await expect(page.getByTestId('manager-chip')).toHaveText('Manager: Claude');
+    await page.keyboard.press('Escape');
+
+    // The Anthropic key is rate-limited, so the reply fails over to Gemini.
+    await page.getByLabel('Message').fill('Hello from the end-to-end test');
+    await page.keyboard.press('Enter');
+    const reply = page.getByTestId('assistant-message');
+    await expect(reply).toContainText('Hello from the end-to-end test');
+    await expect(reply).toContainText('Gemini 3.8 Flash');
+    await expect(reply).toContainText('Personal');
+    await expect(page.getByTestId('manager-chip')).toHaveText('Manager: Gemini');
+
+    // Stopping keeps what was written so far.
+    await page.getByLabel('Message').fill('[slow] Tell me a long story');
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('live-reply')).toContainText('Mock reply');
+    await page.getByRole('button', { name: 'Stop' }).click();
+    await expect(page.getByTestId('assistant-message').last()).toContainText('Stopped');
+  } finally {
+    await first.app.close();
+  }
+
+  const second = await launchApp({ mock: true });
+  try {
+    const { page } = second;
+    // Keys were saved (encrypted) and can still be read.
+    await expect(page.getByTestId('manager-chip')).toHaveText('Manager: Gemini');
+    await page.getByRole('button', { name: 'Hello from the end-to-end test', exact: true }).click();
+    await expect(page.getByTestId('user-message')).toHaveCount(2);
+    await expect(page.getByTestId('assistant-message')).toHaveCount(2);
   } finally {
     await second.app.close();
   }

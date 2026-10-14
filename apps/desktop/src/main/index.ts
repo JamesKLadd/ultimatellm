@@ -2,12 +2,22 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { app, BrowserWindow, dialog, Menu, nativeTheme, session } from 'electron';
-import { createSettingsStore } from '@ultimatellm/db';
-import { EventChannel, type AppCommand, type ThemePreference } from '@ultimatellm/shared';
+import { AccountService } from '@ultimatellm/accounts';
+import { ChatEngine } from '@ultimatellm/core';
+import { createAccountStore, createChatStore, createSettingsStore } from '@ultimatellm/db';
+import { createProviderAdapters } from '@ultimatellm/providers';
+import {
+  EventChannel,
+  type AppCommand,
+  type DataScope,
+  type ThemePreference,
+} from '@ultimatellm/shared';
 import { openAppDatabase } from './database';
 import { registerIpcHandlers } from './ipc';
 import { buildAppMenu } from './menu';
 import { registerAppScheme, serveAppProtocol } from './protocol';
+import { batchTextEvents } from './run-events';
+import { createSafeStorageBox } from './secret-box';
 import { applyDevServerCsp, hardenSession, hardenWebContents } from './security/hardening';
 import { APP_ORIGIN, buildContentSecurityPolicy } from './security/policy';
 import { runSmokeTest } from './smoke-test';
@@ -15,6 +25,13 @@ import { createMainWindow } from './window';
 
 const APP_USER_MODEL_ID = 'com.ultimatellm.desktop';
 const isSmokeTest = process.argv.includes('--smoke-test');
+/**
+ * Offline mock providers instead of the real APIs, for development and tests
+ * (`pnpm dev:mock`). Never available in an installed app.
+ */
+const mockProviders =
+  !app.isPackaged &&
+  (process.argv.includes('--mock-providers') || process.env.ULL_MOCK_PROVIDERS === '1');
 /** Set by `electron-vite dev`. Ignored in packaged builds. */
 const devServerUrl = app.isPackaged ? undefined : process.env.ELECTRON_RENDERER_URL || undefined;
 
@@ -60,7 +77,6 @@ function configureUserDataPath(): void {
 
 function start(): void {
   const database = openAppDatabase();
-  app.on('will-quit', () => database.close());
   const settings = createSettingsStore(database.db);
 
   // nativeTheme drives `prefers-color-scheme` in the UI and the native window chrome.
@@ -79,9 +95,51 @@ function start(): void {
     serveAppProtocol(join(__dirname, '../renderer'), buildContentSecurityPolicy('production'));
   }
 
-  registerIpcHandlers({ trustedOrigins, settings, applyTheme });
-
   let mainWindow: BrowserWindow | null = null;
+  const sendToWindow = (channel: string, payload: unknown) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload);
+  };
+  const changed = (scope: DataScope) => sendToWindow(EventChannel.dataChanged, scope);
+
+  const adapters = createProviderAdapters({ mock: mockProviders });
+  const accounts = new AccountService({
+    store: createAccountStore(database.db),
+    adapters,
+    secrets: createSafeStorageBox(),
+  });
+  const engine = new ChatEngine({
+    accounts,
+    adapters,
+    chats: createChatStore(database.db),
+    managerOrder: () => settings.get('orchestration.managerPriority'),
+    emit: batchTextEvents((event) => sendToWindow(EventChannel.chatRun, event)),
+    changed,
+  });
+
+  registerIpcHandlers({
+    trustedOrigins,
+    settings,
+    accounts,
+    engine,
+    mockProviders,
+    applyTheme,
+    changed,
+  });
+
+  // On quit, stop replies and give them a moment to save before closing the database.
+  let closing = false;
+  app.on('will-quit', (event) => {
+    if (closing) return;
+    closing = true;
+    if (!engine.hasRuns()) return database.close();
+    event.preventDefault();
+    engine.stopAll();
+    void engine.waitForAll(2000).finally(() => {
+      database.close();
+      app.quit();
+    });
+  });
+
   const openMainWindow = () => {
     const window = createMainWindow(devServerUrl ?? `${APP_ORIGIN}/index.html`);
     window.on('closed', () => {

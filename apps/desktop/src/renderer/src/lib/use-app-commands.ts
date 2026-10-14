@@ -9,10 +9,10 @@ export function useAppCommands(): void {
         const ui = useUiStore.getState();
         switch (command) {
           case 'new-chat':
-            ui.setView('new-chat');
+            ui.newChat();
             break;
           case 'open-settings':
-            ui.setSettingsOpen(true);
+            ui.openSettings();
             break;
           case 'toggle-sidebar':
             ui.toggleSidebar();
