@@ -7,7 +7,7 @@ Each provider is wrapped behind one interface so the orchestrator never deals wi
 ```ts
 interface ProviderAdapter {
   id: "xai" | "openai" | "anthropic" | "google";
-  authTypes: ("api_key" | "oauth")[];
+  authTypes: AuthType[];   // see "Sign-in flows" below
 
   validate(cred: Credential): Promise<AccountInfo>;          // on sign-in, plus periodic health checks
   listModels(cred: Credential): Promise<string[]>;           // cross-checked against the registry
@@ -73,9 +73,27 @@ The usage page shows, per account: status, priority, tokens/cost today/this mont
 
 ## Sign-in flows
 
-- **API key (baseline):** paste the key → `validate()` → label it → place it in the priority list. Each provider's console page is linked in the UI.
-- **OAuth / plan sign-in (preferred where legitimate):** depends on Spike 1 in [07](07-open-questions.md). If a provider offers an official third-party OAuth for model access, the adapter uses a browser-based OAuth flow with PKCE (system browser + loopback/custom-scheme redirect) and stores refresh tokens in the keychain.
-- **xAI required:** onboarding cannot be finished without one working xAI account (R7).
+Decided by [Spike 1](spikes/01-subscription-auth.md):
+
+```ts
+type AuthType =
+  | "api_key"             // all providers
+  | "chatgpt_plan"        // OpenAI: Sign in with ChatGPT, usage billed to the user's Plus/Pro plan
+  | "claude_code_bridge"  // Anthropic, Phase 2 option: runs the user's own signed-in Claude Code
+  | "xai_oauth";          // xAI, only if xAI opens SuperGrok OAuth to apps like ours
+```
+
+| Provider | v1 sign-in options | Notes |
+| --- | --- | --- |
+| OpenAI | **Continue with ChatGPT** (plan usage) · API key | ChatGPT-plan accounts can't generate images or run Code Interpreter. The planner treats those as account capabilities. Requires UltimateLLM to qualify as an open-source/local app (decision D1 in [07](07-open-questions.md)). |
+| Anthropic | API key | Claude Max includes $100–200/month of API credits for a linked Console org. Onboarding explains this. |
+| Google | API key (AI Studio) | AI Pro/Ultra include $10/$100 per month of Cloud credits usable for the Gemini API. There's also a free tier. |
+| xAI | API key (**required**, powers Grok bot) | SuperGrok doesn't include API access. |
+
+- **API key:** paste the key → `validate()` → label it → place it in the priority list. Each provider's console page is linked in the UI.
+- **ChatGPT plan:** system browser + OAuth 2.0 PKCE with a loopback redirect (`http://127.0.0.1:<port>/auth/callback`) and dynamic client registration on first sign-in. Tokens (1-hour access, rotating refresh) are encrypted with `safeStorage`. The UI shows "Using ChatGPT plan" with a *Manage usage* link.
+- **Plan → pay-per-token fallback is opt-in.** When a plan account hits its limit, the account pool moves on to an API-key account only if the user allowed it for that provider. Otherwise those requests pause.
+- **xAI required:** onboarding cannot be finished without one working xAI API key (R7).
 
 ## Adding providers later
 

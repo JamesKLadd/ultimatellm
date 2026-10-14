@@ -2,18 +2,20 @@
 
 Each phase ends with something usable. No dates; quality over speed.
 
-## Phase 0 – Foundations & research
-- **Spike 1: subscription sign-in vs API keys** (must finish before building account flows). See [07](07-open-questions.md).
-- Spike 2: Vercel AI SDK vs official SDKs (effort mapping, usage headers, built-in tools, image gen).
-- Monorepo scaffold (pnpm + Turborepo), Electron Forge + Vite + React + Tailwind + shadcn/ui.
-- Secure Electron baseline (context isolation, typed preload IPC, CSP).
-- SQLite + Drizzle setup, CI (lint, typecheck, tests) on Windows + macOS runners.
-- **Exit:** an empty app shell that builds and runs on both OSes, with CI green.
+## Phase 0 – Foundations & research ✅
+- ✅ **Spike 1: subscription sign-in vs API keys:** [report](spikes/01-subscription-auth.md). OpenAI plan sign-in is possible. Anthropic, Google and xAI need API keys for now (plan-included API credits where available).
+- ✅ **Spike 2: SDK choice:** [report](spikes/02-sdk-choice.md). Vercel AI SDK v7.
+- ✅ Monorepo scaffold (pnpm + Turborepo), electron-vite + electron-builder, React + Tailwind + shadcn-style components ([D-002](decisions.md)).
+- ✅ Secure Electron baseline: sandbox, `app://` protocol + strict CSP, typed and validated IPC, navigation/permission lockdown, fuses ([D-001](decisions.md)).
+- ✅ Local SQLite (`node:sqlite`) + Drizzle with migrations; the theme setting is stored in it ([D-003](decisions.md)).
+- ✅ App shell: sidebar (New chat / Chats / Projects / Library), custom title bar, composer with output-mode and plan-mode pickers, settings dialog with System/Light/Dark theme, native menu with shortcuts.
+- ✅ CI: format, lint, typecheck, unit tests, migration drift check, end-to-end tests on Linux; build + end-to-end tests + unsigned installers + packaged-app smoke test on Windows and macOS.
+- **Exit:** an empty app shell that builds and runs on Windows and macOS, with CI green.
 
 ## Phase 1 – v1 MVP: multi-provider chat with Grok bot
 - UltimateLLM account sign-in (Supabase Auth).
-- Provider accounts for **xAI, OpenAI, Anthropic, Google** (API keys and/or whatever Spike 1 allows). Priority list UI. Failover. Spend caps. Health checks.
-- xAI-required onboarding.
+- Provider accounts for **xAI, OpenAI, Anthropic, Google**: API keys for all four, plus **Continue with ChatGPT** (plan usage) for OpenAI. Priority list UI. Failover, with opt-in plan → API-key fallback. Spend caps. Health checks.
+- Onboarding: xAI API key required. Explain plan-included API credits (Claude Max, Google AI Pro/Ultra).
 - Model registry v1 (bundled snapshot + remote update) for the four providers.
 - Grok bot: triage → plan → DAG executor → compile, with all **4 output modes** and both **plan modes** (Auto / Review), user overrides, backup manager.
 - Chat UI: sidebar, conversation, composer with mode pickers, **live model activity strip**, plan card, sources panel, cost/token display.
@@ -21,12 +23,13 @@ Each phase ends with something usable. No dates; quality over speed.
 - Usage page per account.
 - Basic library: auto-save generated images. Save docs. List + tags + search. Cloud sync.
 - Image generation through the planner.
-- Light/dark theme, command palette, core keyboard shortcuts.
+- Command palette and more keyboard shortcuts (light/dark theme and basic shortcuts shipped in Phase 0).
 - **Exit:** daily use as the main AI app.
 
 ## Phase 2 – Local projects & coding agent
 - Local projects: folder, instructions, memory, files.
 - Coding agent tool loop, diff viewer, integrated terminal.
+- Plan-funded agent backends where allowed: **Codex app-server** with the ChatGPT-plan token, and an optional **Claude Code bridge** that runs the user's own signed-in Claude Code (confirm with Anthropic before shipping publicly; see [Spike 1](spikes/01-subscription-auth.md)).
 - Approval / Auto permission modes, deny list, action timeline, checkpoints.
 - Feedback (👍/👎) → preference profile → personalized routing.
 - Library editing + version history. Voice input.
