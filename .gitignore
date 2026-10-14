@@ -1,0 +1,19 @@
+node_modules/
+.turbo/
+
+# Build output
+out/
+release/
+
+# Test output
+test-results/
+playwright-report/
+coverage/
+
+# Local env & OS files
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+*.log

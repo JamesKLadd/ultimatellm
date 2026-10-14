@@ -1,0 +1,18 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Supply-chain safety: only install package versions that have been public for
+# at least 7 days (value is in minutes). Most malicious npm releases are caught
+# and pulled within hours to days.
+minimumReleaseAge: 10080
+
+# pnpm doesn't run dependency install scripts unless they're listed here.
+# (Electron needs none: it downloads its binary the first time it's launched.)
+onlyBuiltDependencies:
+  - esbuild
+
+# Squirrel.Windows installer helper pulled in by electron-builder. We build NSIS
+# installers instead, so its install script isn't needed.
+ignoredBuiltDependencies:
+  - electron-winstaller

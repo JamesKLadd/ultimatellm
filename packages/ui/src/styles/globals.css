@@ -1,0 +1,144 @@
+/*
+ * UltimateLLM design tokens. Import after `tailwindcss` in the app's stylesheet.
+ *
+ * Dark mode follows `prefers-color-scheme`. In the desktop app the main process
+ * sets `nativeTheme.themeSource` (System / Light / Dark), which drives that
+ * media query. The UI never toggles theme classes itself.
+ */
+
+/* Enter/exit animations used by dialogs and tooltips (animate-in, fade-in-0, ...). */
+@import 'tw-animate-css';
+
+/* Scan this package's components for Tailwind class names. */
+@source '../';
+
+:root {
+  --radius: 0.75rem;
+
+  --background: oklch(0.985 0.002 90);
+  --foreground: oklch(0.22 0.006 60);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.006 60);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.006 60);
+  --primary: oklch(0.22 0.006 60);
+  --primary-foreground: oklch(0.985 0.002 90);
+  --secondary: oklch(0.945 0.004 90);
+  --secondary-foreground: oklch(0.22 0.006 60);
+  --muted: oklch(0.955 0.004 90);
+  --muted-foreground: oklch(0.52 0.01 60);
+  --accent: oklch(0.935 0.005 90);
+  --accent-foreground: oklch(0.22 0.006 60);
+  --destructive: oklch(0.58 0.22 27);
+  --border: oklch(0.905 0.005 90);
+  --input: oklch(0.88 0.005 90);
+  --ring: oklch(0.6 0.16 265);
+  --brand: oklch(0.56 0.2 268);
+  --brand-foreground: oklch(0.985 0.002 90);
+
+  --sidebar: oklch(0.965 0.004 90);
+  --sidebar-foreground: oklch(0.3 0.006 60);
+  --sidebar-accent: oklch(0.925 0.005 90);
+  --sidebar-accent-foreground: oklch(0.2 0.006 60);
+  --sidebar-border: oklch(0.91 0.005 90);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.215 0.004 60);
+    --foreground: oklch(0.955 0.003 90);
+    --card: oklch(0.25 0.004 60);
+    --card-foreground: oklch(0.955 0.003 90);
+    --popover: oklch(0.25 0.004 60);
+    --popover-foreground: oklch(0.955 0.003 90);
+    --primary: oklch(0.955 0.003 90);
+    --primary-foreground: oklch(0.215 0.004 60);
+    --secondary: oklch(0.28 0.004 60);
+    --secondary-foreground: oklch(0.955 0.003 90);
+    --muted: oklch(0.265 0.004 60);
+    --muted-foreground: oklch(0.7 0.008 80);
+    --accent: oklch(0.29 0.004 60);
+    --accent-foreground: oklch(0.955 0.003 90);
+    --destructive: oklch(0.66 0.2 25);
+    --border: oklch(1 0 0 / 9%);
+    --input: oklch(1 0 0 / 14%);
+    --ring: oklch(0.66 0.15 265);
+    --brand: oklch(0.7 0.16 268);
+    --brand-foreground: oklch(0.2 0.004 60);
+
+    --sidebar: oklch(0.185 0.004 60);
+    --sidebar-foreground: oklch(0.86 0.004 80);
+    --sidebar-accent: oklch(0.255 0.004 60);
+    --sidebar-accent-foreground: oklch(0.97 0.003 90);
+    --sidebar-border: oklch(1 0 0 / 7%);
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* Window dragging for the custom title bar (frameless window regions). */
+@utility app-drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+@utility app-no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply overflow-hidden bg-background text-foreground antialiased;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+  }
+}

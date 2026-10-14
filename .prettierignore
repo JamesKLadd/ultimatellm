@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+**/out/
+**/release/
+**/.turbo/
+**/test-results/
+**/playwright-report/
+packages/db/migrations/
+# Docs are hand-formatted prose; Prettier would reflow their tables.
+**/*.md

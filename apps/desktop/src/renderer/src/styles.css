@@ -1,0 +1,7 @@
+@import 'tailwindcss';
+@import '@ultimatellm/ui/styles.css';
+
+/* Platform variants, based on <html data-platform="…"> (set in main.tsx). */
+@custom-variant mac (&:where([data-platform='darwin'] *));
+/* Windows and Linux draw the native window buttons over the top-right corner. */
+@custom-variant wco (&:where([data-platform='win32'] *, [data-platform='linux'] *));

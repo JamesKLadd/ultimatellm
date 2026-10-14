@@ -1,0 +1,66 @@
+# Packaging config: https://www.electron.build/configuration
+# TODO before a public release: pick the final appId (it can't change later
+# without breaking updates), add icons, and set up code signing + notarization.
+appId: com.ultimatellm.desktop
+productName: UltimateLLM
+copyright: Copyright © 2026 UltimateLLM contributors
+
+directories:
+  output: release/${version}
+  buildResources: build
+
+# Everything the app needs is bundled into out/ by electron-vite.
+files:
+  - out/**/*
+  - '!out/**/*.map'
+  - package.json
+
+asar: true
+# No native modules (SQLite is built into Electron's Node), so nothing to rebuild.
+npmRebuild: false
+
+# Turn off Electron features the app doesn't use, so they can't be abused.
+# https://www.electronjs.org/docs/latest/tutorial/fuses
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
+
+mac:
+  target:
+    - target: dmg
+      arch: [arm64]
+  category: public.app-category.productivity
+  # Ad-hoc signature until we have an Apple Developer ID (Apple-silicon builds
+  # won't launch unsigned). Hardened runtime can't be combined with ad-hoc
+  # signing; turn it on together with Developer ID signing + notarization.
+  identity: '-'
+  hardenedRuntime: false
+
+dmg:
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+
+nsis:
+  # Per-user, one-click install like the Claude and ChatGPT desktop apps.
+  oneClick: true
+  perMachine: false
+  artifactName: ${productName}-${version}-win-${arch}-setup.${ext}
+
+linux:
+  executableName: ultimatellm
+  target:
+    - target: AppImage
+      arch: [x64]
+  category: Utility
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}
+
+publish: null

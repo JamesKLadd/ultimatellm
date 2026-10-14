@@ -1,0 +1,25 @@
+{
+  "name": "@ultimatellm/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Local SQLite database (node:sqlite + Drizzle): schema, migrations and data access.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate"
+  },
+  "dependencies": {
+    "@ultimatellm/shared": "workspace:*",
+    "drizzle-orm": "1.0.0-rc.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "drizzle-kit": "1.0.0-rc.4",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
