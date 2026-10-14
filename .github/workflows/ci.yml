@@ -4,10 +4,12 @@ name: CI
 # tests, unsigned installers) are slower, and in a private repo their minutes
 # cost more of the free quota (macOS especially), so they only run on pull
 # requests, on pushes to the default branch, and when started manually from
-# the Actions tab.
+# the Actions tab. Changes that only touch Markdown docs don't trigger CI.
 on:
   push:
+    paths-ignore: ['**.md', 'docs/**']
   pull_request:
+    paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
 
 concurrency:
