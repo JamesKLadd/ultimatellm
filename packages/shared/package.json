@@ -2,6 +2,7 @@
   "name": "@ultimatellm/shared",
   "version": "0.0.0",
   "private": true,
+  "license": "Apache-2.0",
   "description": "Types, schemas and IPC contracts shared by the main process and the UI.",
   "type": "module",
   "exports": {

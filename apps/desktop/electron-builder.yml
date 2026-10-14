@@ -15,6 +15,11 @@ files:
   - '!out/**/*.map'
   - package.json
 
+# Ship the project's license inside the installed app.
+extraResources:
+  - from: ../../LICENSE
+    to: LICENSE.txt
+
 asar: true
 # No native modules (SQLite is built into Electron's Node), so nothing to rebuild.
 npmRebuild: false

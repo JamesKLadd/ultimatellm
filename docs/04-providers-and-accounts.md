@@ -85,7 +85,7 @@ type AuthType =
 
 | Provider | v1 sign-in options | Notes |
 | --- | --- | --- |
-| OpenAI | **Continue with ChatGPT** (plan usage) · API key | ChatGPT-plan accounts can't generate images or run Code Interpreter. The planner treats those as account capabilities. Requires UltimateLLM to qualify as an open-source/local app (decision D1 in [07](07-open-questions.md)). |
+| OpenAI | **Continue with ChatGPT** (plan usage) · API key | ChatGPT-plan accounts can't generate images or run Code Interpreter. The planner treats those as account capabilities. Available because UltimateLLM is an open-source, locally run app (Apache-2.0, [D-008](decisions.md)). |
 | Anthropic | API key | Claude Max includes $100–200/month of API credits for a linked Console org. Onboarding explains this. |
 | Google | API key (AI Studio) | AI Pro/Ultra include $10/$100 per month of Cloud credits usable for the Gemini API. There's also a free tier. |
 | xAI | API key (**required**, powers Grok bot) | SuperGrok doesn't include API access. |

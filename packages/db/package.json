@@ -2,6 +2,7 @@
   "name": "@ultimatellm/db",
   "version": "0.0.0",
   "private": true,
+  "license": "Apache-2.0",
   "description": "Local SQLite database (node:sqlite + Drizzle): schema, migrations and data access.",
   "type": "module",
   "exports": {

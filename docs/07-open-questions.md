@@ -1,15 +1,15 @@
 # 07 – Open questions & spikes
 
-## Decisions needed from you
+## Decisions made
 
-| # | Decision | Options | Recommendation | Needed by |
-| --- | --- | --- | --- | --- |
-| D1 | **Make UltimateLLM open source?** OpenAI's ChatGPT plan sign-in is open to *open-source and locally hosted* apps; the repo is currently private. | (a) Public repo + OSI license (Apache-2.0 or MIT) · (b) stay private and apply as a "selected private client" · (c) OpenAI via API key only for now | **(a)**: qualifies immediately, fits the "probably free" plan, and xAI says more open-source integrations are coming. | Before Phase 1's OpenAI sign-in ships |
+| # | Decision | Outcome |
+| --- | --- | --- |
+| D1 | Make UltimateLLM open source? (OpenAI's ChatGPT plan sign-in is open to *open-source and locally hosted* apps.) | ✅ **Yes, Apache-2.0** (2026-10-14). The repository is to be made public. See [D-008](decisions.md). |
 
 ## Spike 1 – Subscription sign-in vs API keys
 
 ✅ **Resolved (2026-10-14):** see the [Spike 1 report](spikes/01-subscription-auth.md).
-- **OpenAI:** *Sign in with ChatGPT* plan usage is available to open-source/local apps (see D1).
+- **OpenAI:** *Sign in with ChatGPT* plan usage is available to open-source/local apps. UltimateLLM qualifies now that it is open source (D1).
 - **Anthropic:** third-party plan login is prohibited. Max plans include $100–200/month of API credits.
 - **Google:** reusing Gemini CLI OAuth is prohibited. AI Pro/Ultra include $10/$100 per month of Cloud credits.
 - **xAI:** SuperGrok OAuth exists for partners only. API key for now.

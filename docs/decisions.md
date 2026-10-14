@@ -4,6 +4,19 @@ Short records of technical decisions: what was chosen, why, and what would make 
 
 ---
 
+### D-008 · Open source under Apache-2.0 (2026-10-14)
+**Decision:** UltimateLLM is open source under the [Apache License 2.0](../LICENSE), and the GitHub repository is public. `main` is the default branch.
+**Why:**
+- OpenAI's *Sign in with ChatGPT* plan usage is open to open-source, locally hosted apps, so users can spend their ChatGPT plan in UltimateLLM.
+- It fits the plan to offer the app for free.
+- xAI has said more open-source integrations of SuperGrok sign-in are coming.
+
+Apache-2.0 (rather than MIT) adds an explicit patent grant and a requirement to note changes in modified copies.
+**Implications:**
+- Never commit secrets: provider keys and OAuth tokens only ever live in the user's OS keychain.
+- Contributions are accepted under the same license (Apache-2.0 §5).
+- A paid or hosted edition would need OpenAI's interest-form approval for plan usage.
+
 ### D-007 · Supply-chain guard: 7-day minimum package age (2026-10-14)
 **Decision:** `minimumReleaseAge: 10080` in `pnpm-workspace.yaml`. pnpm only installs versions that have been public for at least 7 days. Dependency install scripts are also blocked except for an explicit allowlist (`onlyBuiltDependencies`).
 **Why:** Most malicious npm releases are caught and pulled within hours or days. The cost is getting fixes up to a week later.
@@ -22,7 +35,7 @@ Short records of technical decisions: what was chosen, why, and what would make 
 ### D-004 · Use plan sign-in where providers allow it (2026-10-14)
 **Decision:** OpenAI accounts support *Sign in with ChatGPT* plan usage. Anthropic, Google and xAI use API keys for now (with plan-included API credits where they exist).
 **Why:** Only OpenAI currently permits third-party apps to use a consumer plan. Details: [Spike 1](spikes/01-subscription-auth.md).
-**Open:** whether UltimateLLM becomes open source (affects OpenAI eligibility); see [07](07-open-questions.md).
+**Follow-up:** made eligible for OpenAI's open-source path by D-008.
 
 ### D-003 · `node:sqlite` + Drizzle 1.0 RC for the local database (2026-10-14)
 **Decision:** Use Node's built-in SQLite (in Electron 44's Node 24) with `drizzle-orm@1.0.0-rc.4` (exact pin), instead of `better-sqlite3`.

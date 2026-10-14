@@ -3,7 +3,7 @@
 Each phase ends with something usable. No dates; quality over speed.
 
 ## Phase 0 – Foundations & research ✅
-- ✅ **Spike 1: subscription sign-in vs API keys:** [report](spikes/01-subscription-auth.md). OpenAI plan sign-in is possible. Anthropic, Google and xAI need API keys for now (plan-included API credits where available).
+- ✅ **Spike 1: subscription sign-in vs API keys:** [report](spikes/01-subscription-auth.md). OpenAI plan sign-in is possible (UltimateLLM is now open source under Apache-2.0, which makes it eligible). Anthropic, Google and xAI need API keys for now (plan-included API credits where available).
 - ✅ **Spike 2: SDK choice:** [report](spikes/02-sdk-choice.md). Vercel AI SDK v7.
 - ✅ Monorepo scaffold (pnpm + Turborepo), electron-vite + electron-builder, React + Tailwind + shadcn-style components ([D-002](decisions.md)).
 - ✅ Secure Electron baseline: sandbox, `app://` protocol + strict CSP, typed and validated IPC, navigation/permission lockdown, fuses ([D-001](decisions.md)).

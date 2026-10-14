@@ -54,3 +54,7 @@ docs/                Product and design docs
 | [Decision log](docs/decisions.md) | Technical decisions with their reasoning. |
 | [Spike 1 – Plan sign-in vs API keys](docs/spikes/01-subscription-auth.md) | Which providers let you use your paid plan in UltimateLLM. |
 | [Spike 2 – SDK choice](docs/spikes/02-sdk-choice.md) | Why the Vercel AI SDK, verified against all four providers. |
+
+## License
+
+UltimateLLM is open source under the [Apache License 2.0](LICENSE). By contributing, you agree that your contributions are licensed under the same terms.

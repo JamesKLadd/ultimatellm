@@ -51,13 +51,8 @@ OpenAI turned *Sign in with ChatGPT* from identity-only into a way to spend a Ch
 
 **Phase 2 bonus:** the same token also works through **Codex app-server** ("directly and through Codex app-server"). That gives us a sanctioned, plan-funded coding-agent backend for local projects.
 
-### ⚠️ Decision needed: is UltimateLLM open source?
-The open path is for **open-source / locally hosted** apps. UltimateLLM is local, but the GitHub repo is currently **private**. Options:
-1. **Open-source it** (public repo + an OSI license such as Apache-2.0 or MIT) before ChatGPT sign-in ships. It qualifies right away. It also fits your "probably free" plan, and xAI says more open-source integrations are coming. *(Recommended.)*
-2. **Stay private** and apply as a "selected private client" through the interest form. Approval isn't guaranteed.
-3. Use **API keys only** for OpenAI until you decide.
-
-This only blocks the OpenAI sign-in feature in Phase 1, not Phase 0.
+### ✅ Decided: UltimateLLM is open source (Apache-2.0)
+The open path is for **open-source / locally hosted** apps. UltimateLLM is both: it is licensed under Apache-2.0 and runs locally, so it can use the open-source registration flow ([D-008](../decisions.md)). If a paid or hosted edition is ever offered, it goes through OpenAI's interest form.
 
 ---
 

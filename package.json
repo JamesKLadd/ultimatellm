@@ -1,6 +1,7 @@
 {
   "name": "ultimatellm",
   "private": true,
+  "license": "Apache-2.0",
   "description": "Desktop app that routes your prompts across all of your AI providers, managed by Grok bot.",
   "packageManager": "pnpm@10.28.0",
   "engines": {
