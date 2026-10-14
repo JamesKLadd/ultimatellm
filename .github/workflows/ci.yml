@@ -1,0 +1,140 @@
+name: CI
+
+# Linux checks run on every push. The Windows + macOS jobs (build, end-to-end
+# tests, unsigned installers) are slower, and in a private repo their minutes
+# cost more of the free quota (macOS especially), so they only run on pull
+# requests, on pushes to the default branch, and when started manually from
+# the Actions tab.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  checks:
+    name: Checks (Linux)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Format
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Database migrations match the schema
+        run: |
+          pnpm db:generate
+          if [ -n "$(git status --porcelain packages/db/migrations)" ]; then
+            echo "::error::packages/db/src/schema.ts changed without a migration. Run 'pnpm db:generate' and commit the result."
+            git status --porcelain packages/db/migrations
+            exit 1
+          fi
+
+      - name: Build
+        run: pnpm build
+
+      # Ubuntu 24.04 blocks the unprivileged user namespaces Chromium's sandbox uses.
+      - name: Allow Chromium's sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: End-to-end tests
+        run: xvfb-run -a pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-linux
+          path: apps/desktop/playwright-report
+          retention-days: 7
+
+  desktop:
+    name: Desktop (${{ matrix.os }})
+    needs: checks
+    if: github.event_name != 'push' || github.ref_name == github.event.repository.default_branch
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: End-to-end tests
+        run: pnpm test:e2e
+
+      # Not code-signed yet (macOS builds get an ad-hoc signature, see electron-builder.yml).
+      - name: Package
+        run: pnpm --filter @ultimatellm/desktop exec electron-builder --publish never
+
+      - name: Smoke-test the packaged app
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            app=(apps/desktop/release/*/mac-arm64/UltimateLLM.app/Contents/MacOS/UltimateLLM)
+          else
+            app=(apps/desktop/release/*/win-unpacked/UltimateLLM.exe)
+          fi
+          "${app[0]}" --smoke-test
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: UltimateLLM-${{ runner.os }}
+          path: |
+            apps/desktop/release/*/*.dmg
+            apps/desktop/release/*/*-setup.exe
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-${{ runner.os }}
+          path: apps/desktop/playwright-report
+          retention-days: 7
