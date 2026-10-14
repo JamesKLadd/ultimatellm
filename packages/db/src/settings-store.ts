@@ -19,10 +19,13 @@ export function createSettingsStore(db: AppDatabase): SettingsStore {
         .from(settings)
         .where(eq(settings.key, key))
         .get();
-      if (!row) return definition.default as SettingValue<K>;
+      // Defaults are shared constants; hand out copies so callers can't change them.
+      if (!row) return structuredClone(definition.default) as SettingValue<K>;
 
       const parsed = definition.schema.safeParse(row.value);
-      return (parsed.success ? parsed.data : definition.default) as SettingValue<K>;
+      return (
+        parsed.success ? parsed.data : structuredClone(definition.default)
+      ) as SettingValue<K>;
     },
 
     set<K extends SettingKey>(key: K, value: SettingValue<K>): void {

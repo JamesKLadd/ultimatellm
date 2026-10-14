@@ -88,12 +88,12 @@ type AuthType =
 | OpenAI | **Continue with ChatGPT** (plan usage) · API key | ChatGPT-plan accounts can't generate images or run Code Interpreter. The planner treats those as account capabilities. Available because UltimateLLM is an open-source, locally run app (Apache-2.0, [D-008](decisions.md)). |
 | Anthropic | API key | Claude Max includes $100–200/month of API credits for a linked Console org. Onboarding explains this. |
 | Google | API key (AI Studio) | AI Pro/Ultra include $10/$100 per month of Cloud credits usable for the Gemini API. There's also a free tier. |
-| xAI | API key (**required**, powers Grok bot) | SuperGrok doesn't include API access. |
+| xAI | API key (optional; makes Grok bot the manager) | SuperGrok doesn't include API access. |
 
 - **API key:** paste the key → `validate()` → label it → place it in the priority list. Each provider's console page is linked in the UI.
 - **ChatGPT plan:** system browser + OAuth 2.0 PKCE with a loopback redirect (`http://127.0.0.1:<port>/auth/callback`) and dynamic client registration on first sign-in. Tokens (1-hour access, rotating refresh) are encrypted with `safeStorage`. The UI shows "Using ChatGPT plan" with a *Manage usage* link.
 - **Plan → pay-per-token fallback is opt-in.** When a plan account hits its limit, the account pool moves on to an API-key account only if the user allowed it for that provider. Otherwise those requests pause.
-- **xAI required:** onboarding cannot be finished without one working xAI API key (R7).
+- **No provider is required:** any one working account is enough to start. The first provider in the manager order with a usable account becomes the manager ([03 §7](03-orchestration.md#7-choosing-the-manager)). Google's free Gemini API tier is the cheapest way to try the app.
 
 ## Adding providers later
 

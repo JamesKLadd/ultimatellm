@@ -15,13 +15,15 @@ export function NewChatView() {
         <div>
           <p className="font-medium">No AI accounts connected yet</p>
           <p className="text-muted-foreground">
-            Grok bot needs an xAI account to plan your prompts. Account setup is coming next.
+            Connect any of xAI, Anthropic, OpenAI or Google. The first one you have, in the order
+            Grok, Claude, ChatGPT, Gemini, becomes the manager that plans your prompts. Account
+            setup is coming next.
           </p>
         </div>
       </div>
       <Composer />
       <p className="mt-3 text-center text-xs text-muted-foreground">
-        Grok bot splits your prompt into tasks and sends each one to the best model you have.
+        The manager splits your prompt into tasks and sends each one to the best model you have.
       </p>
     </div>
   );

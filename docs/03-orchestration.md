@@ -1,11 +1,11 @@
-# 03 – Orchestration (Grok bot)
+# 03 – Orchestration (the manager)
 
-Grok bot is the heart of the app. It has four jobs: **plan → execute → monitor → compile**.
+The **manager** is the heart of the app. By default it's **Grok bot** (xAI), but no provider is required: the role goes to the first provider in the user's manager order that they have an account for (see [§7](#7-choosing-the-manager)). It has four jobs: **plan → execute → monitor → compile**.
 
 ```mermaid
 sequenceDiagram
   participant U as User
-  participant G as Grok bot (manager)
+  participant G as Manager (Grok bot by default)
   participant X as Executor
   participant P as Providers
   U->>G: prompt + output mode + plan mode (+ overrides)
@@ -24,16 +24,16 @@ sequenceDiagram
 
 ## 1. Triage (cost and latency guard)
 
-Not every prompt needs splitting. Running a full plan for "what's 2+2" wastes money and time. Grok bot first classifies the prompt:
+Not every prompt needs splitting. Running a full plan for "what's 2+2" wastes money and time. The manager first classifies the prompt:
 
-- **Direct:** one subtask, routed to one model. Planning is a single cheap call (or Grok bot answers itself if it is the best fit for the mode).
+- **Direct:** one subtask, routed to one model. Planning is a single cheap call (or the manager answers itself if it is the best fit for the mode).
 - **Orchestrated:** a multi-subtask plan.
 
-Triage and planning should use a **fast/cheap Grok tier**. A reasoning tier is used only for complex plans or in `Best` mode.
+Triage and planning use the manager provider's **fast tier** (e.g. a fast Grok model). Its stronger reasoning tier is used only for complex plans or in `Best` mode. The registry marks which models each provider uses for these roles.
 
 ## 2. Planning
 
-Grok bot returns a **structured plan** (JSON, validated with Zod). If the output fails validation, it is retried once with the validation error included.
+The manager returns a **structured plan** (JSON, validated with Zod). If the output fails validation, it is retried once with the validation error included.
 
 ```ts
 type Plan = {
@@ -79,7 +79,7 @@ The user can pin a model for the whole prompt (`@claude` mention or a composer p
 
 ## 3. Model knowledge base (registry)
 
-Grok bot doesn't need fine-tuning. It needs **good, current data in its context** on every planning call. The registry is versioned JSON, bundled with the app and updated from a feed hosted with the backend, so new models don't need an app release.
+The manager doesn't need fine-tuning. It needs **good, current data in its context** on every planning call. The registry is versioned JSON, bundled with the app and updated from a feed hosted with the backend, so new models don't need an app release.
 
 ```ts
 type ModelEntry = {
@@ -93,6 +93,7 @@ type ModelEntry = {
   speed: { ttftMs: number; tokensPerSec: number };       // measured or published
   scores: Partial<Record<TaskCategory, number>>;         // 0–100, curated from benchmarks + evals
   notes: string;                                        // short, human-written strengths/weaknesses
+  manager?: "fast" | "strong";                          // models this provider uses when it's the manager
 };
 
 type TaskCategory =
@@ -104,7 +105,7 @@ type TaskCategory =
 
 Only the models **the user can actually use** are put in the planner's prompt (filtered by signed-in providers), together with mode weights and the user's preferences. This keeps the prompt short and the choices valid.
 
-**Keeping it accurate:** scores come from public benchmarks plus a small **in-house eval suite** (a fixed set of prompts per category, graded by rubric). It is re-run when new models launch. This suite is also how we test that Grok bot's routing improves over time.
+**Keeping it accurate:** scores come from public benchmarks plus a small **in-house eval suite** (a fixed set of prompts per category, graded by rubric). It is re-run when new models launch. This suite is also how we test that routing improves over time, and how well each provider performs as manager.
 
 ## 4. Personalization
 
@@ -124,23 +125,27 @@ Only the models **the user can actually use** are put in the planner's prompt (f
 
 ## 6. Compilation
 
-Per R12, Grok bot **assembles without rewriting**:
+Per R12, the manager **assembles without rewriting**:
 
 - `concatenate`: outputs in order, with short headings. No model call. Instant and free.
-- `sectioned`: Grok bot writes a short intro and transitions between sections. Worker outputs are inserted **verbatim**.
-- `stitched`: only when the user asks for one integrated answer (e.g. a single essay). Grok bot merges the outputs. Flagged in the UI as "merged by Grok bot".
+- `sectioned`: the manager writes a short intro and transitions between sections. Worker outputs are inserted **verbatim**.
+- `stitched`: only when the user asks for one integrated answer (e.g. a single essay). The manager merges the outputs. Flagged in the UI as "merged by <manager>" (e.g. "merged by Grok").
 
 Every answer has a **"Sources"** panel listing which model produced which part, with the raw outputs, tokens and cost.
 
-## 7. Manager fallback
+## 7. Choosing the manager
 
-If the xAI account(s) fail (outage, rate limit, auth):
+No provider is required. One list decides both who manages and who takes over:
 
-1. Try the user's other xAI accounts (normal failover).
-2. Fall back to a **backup manager**: the best available non-xAI model for planning in this order (user-configurable): Anthropic mid tier → OpenAI mid tier → Google fast tier. Planning needs strong instruction-following and reliable JSON, not frontier reasoning.
-3. If nothing works, send the prompt directly to the user's default model and say that orchestration is unavailable.
+- **Manager order:** default **xAI (Grok bot) → Anthropic (Claude) → OpenAI (ChatGPT) → Google (Gemini)**. The user can reorder it in settings (`orchestration.managerPriority`).
+- **Selection:** the first provider in the order with a **usable account** (active, under its spend cap, not rate-limited) is the manager. Implemented in `rankManagers()` in `packages/shared/src/orchestration.ts`.
+- **Accounts:** manager calls go through that provider's account pool like any other request, so its priority list and failover apply ([04](04-providers-and-accounts.md)).
+- **Fallback:** if all of the manager provider's accounts fail (outage, limits, auth), the next provider in the order takes over for that prompt. Planning needs strong instruction-following and reliable JSON, which all four providers' current models offer.
+- **When nothing can manage** (e.g. every account is rate-limited): send the prompt directly to the user's default model and say that planning is unavailable.
 
-The UI shows a small "Backup manager: <model>" badge while this is in effect. The xAI-account requirement (R7) applies at setup. The backup only covers temporary failures.
+The UI always shows who is managing, e.g. "Manager: Claude", or "Manager: Claude (Grok unavailable)" during a fallback.
+
+**To verify in Phase 1:** structured output through a ChatGPT-plan account, given its request restrictions ([Spike 1](spikes/01-subscription-auth.md)).
 
 ## 8. Cost & tokens
 

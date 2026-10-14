@@ -59,7 +59,7 @@ const PLAN_MODES: readonly SegmentedControlOption<PlanMode>[] = [
         <Play /> Auto
       </>
     ),
-    description: 'Grok bot starts working as soon as it has a plan',
+    description: 'The manager starts working as soon as it has a plan',
   },
   {
     value: 'review',
@@ -68,7 +68,7 @@ const PLAN_MODES: readonly SegmentedControlOption<PlanMode>[] = [
         <ListChecks /> Review
       </>
     ),
-    description: 'Review and edit Grok bot’s plan before it runs',
+    description: 'Review and edit the manager’s plan before it runs',
   },
 ];
 
@@ -83,7 +83,7 @@ export function Composer() {
     <div className="rounded-2xl border bg-card shadow-sm transition-shadow focus-within:shadow-md">
       <Textarea
         aria-label="Message"
-        placeholder="Ask anything. Grok bot will pick the best models for it."
+        placeholder="Ask anything. The manager will pick the best models for it."
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
         className="max-h-64 px-4 pt-3.5"
@@ -113,7 +113,7 @@ export function Composer() {
                 </Button>
               </span>
             </TooltipTrigger>
-            <TooltipContent>Connect an xAI account to start chatting</TooltipContent>
+            <TooltipContent>Connect an AI account to start chatting</TooltipContent>
           </Tooltip>
         </div>
       </div>

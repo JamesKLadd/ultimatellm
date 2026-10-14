@@ -1,6 +1,6 @@
 # UltimateLLM: notes for AI coding sessions
 
-Electron desktop app (Windows/macOS first) that routes prompts across AI providers, managed by "Grok bot". Product and design docs are in `docs/` (start with `docs/06-roadmap.md` for the current phase and `docs/decisions.md` for why the stack is what it is).
+Electron desktop app (Windows/macOS first) that routes prompts across AI providers. A "manager" AI plans each prompt: Grok bot by default, otherwise the first provider in the user's manager order (`rankManagers()` in `packages/shared/src/orchestration.ts`). Product and design docs are in `docs/` (start with `docs/06-roadmap.md` for the current phase and `docs/decisions.md` for why the stack is what it is).
 
 ## Commands (run from the repo root)
 

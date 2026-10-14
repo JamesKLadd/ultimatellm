@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DEFAULT_MANAGER_PRIORITY, ManagerPriority } from './orchestration';
 
 export const ThemePreference = z.enum(['system', 'light', 'dark']);
 export type ThemePreference = z.infer<typeof ThemePreference>;
@@ -10,6 +11,8 @@ export type ThemePreference = z.infer<typeof ThemePreference>;
  */
 export const settingDefinitions = {
   'appearance.theme': { schema: ThemePreference, default: 'system' },
+  /** Which provider manages prompts; see `rankManagers()`. */
+  'orchestration.managerPriority': { schema: ManagerPriority, default: DEFAULT_MANAGER_PRIORITY },
 } as const satisfies Record<string, { schema: z.ZodType; default: unknown }>;
 
 export type SettingKey = keyof typeof settingDefinitions;

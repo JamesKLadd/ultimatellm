@@ -26,7 +26,7 @@ tools: read_file, list_dir, search (ripgrep), edit_file (diff-based), write_file
        + provider built-in web search
 ```
 
-How it fits with Grok bot: for a project prompt, Grok bot plans as usual. Coding subtasks go to an **agent subtask type**. That subtask runs the tool loop with the chosen model (e.g. the best coding model for the mode) instead of a single call. Non-coding subtasks (research, docs, images) run normally in parallel.
+How it fits with the manager: for a project prompt, the manager plans as usual. Coding subtasks go to an **agent subtask type**. That subtask runs the tool loop with the chosen model (e.g. the best coding model for the mode) instead of a single call. Non-coding subtasks (research, docs, images) run normally in parallel.
 
 **Parallel agents and file conflicts:** two agent subtasks may not edit the same project at once unless each runs in its own **git worktree**. That's the v2 approach. In v1, project agent subtasks run one at a time.
 
@@ -46,7 +46,7 @@ GitHub connection: a **GitHub App** (preferred over a personal access token) wit
 
 ### What gets saved
 - Any **image / video / audio** output from a generation tool is saved automatically.
-- **Documents:** long-form outputs (reports, code files, specs) can be saved with one click ("Save to library"). Grok bot can mark outputs as artifacts when it's obvious (e.g. "write me a cover letter").
+- **Documents:** long-form outputs (reports, code files, specs) can be saved with one click ("Save to library"). The manager can mark outputs as artifacts when it's obvious (e.g. "write me a cover letter").
 
 ### Structure
 ```

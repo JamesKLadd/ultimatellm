@@ -2,7 +2,7 @@
 
 ## Vision
 
-Most people who use AI heavily pay for several providers but use them one at a time. UltimateLLM treats every model you have access to as one pool. A manager model (Grok bot) decides which model handles each part of a request, based on your quality/cost/speed preference.
+Most people who use AI heavily pay for several providers but use them one at a time. UltimateLLM treats every model you have access to as one pool. A manager model (Grok bot by default) decides which model handles each part of a request, based on your quality/cost/speed preference.
 
 Personal project for now. It may be released later, likely free because users bring their own model access. Pricing will be decided later.
 
@@ -14,9 +14,10 @@ Personal project for now. It may be released later, likely free because users br
 | **Provider** | An AI company: xAI, OpenAI, Anthropic, Google (v1). More later. |
 | **Provider account** | One set of credentials for a provider. A user can have **any number per provider**. |
 | **Priority list** | Per provider, the order in which accounts are used. The next one takes over on a usage limit or an account problem. |
-| **Grok bot** | The manager. Plans, routes, monitors and compiles. Requires an xAI API key. |
-| **Output mode** | `Cheapest` · `Balanced` · `Best` · `Fastest`. Chosen per prompt. Tells Grok bot what to optimize for. |
-| **Plan mode** | `Auto` (Grok bot plans and starts immediately) or `Review` (the user sees the plan, can edit models/effort/subtasks, then approves). |
+| **Manager** | The AI that plans, routes, monitors and compiles. By default it's **Grok bot** (xAI). No provider is required: the role goes to the first provider in the manager order that the user has an account for. |
+| **Manager order** | Who manages, and who takes over if it fails. Default: xAI (Grok bot) → Anthropic (Claude) → OpenAI (ChatGPT) → Google (Gemini). The user can reorder it. |
+| **Output mode** | `Cheapest` · `Balanced` · `Best` · `Fastest`. Chosen per prompt. Tells the manager what to optimize for. |
+| **Plan mode** | `Auto` (the manager plans and starts immediately) or `Review` (the user sees the plan, can edit models/effort/subtasks, then approves). |
 | **Chat** | `Cloud` (synced), `Local` (on the device), or `Private` (local only, never synced, never uploaded). |
 | **Project** | `Local` (a folder on this machine) or `Cloud` (linked to a GitHub repo, available on every signed-in device). Has its own instructions, files and memory. |
 | **Library** | Saved artifacts: documents, images, video/audio. Synced to the cloud, versioned, editable, organized by project + tags + search. |
@@ -30,16 +31,16 @@ Personal project for now. It may be released later, likely free because users br
 - R4. Automatic failover to the next account when an account hits a usage limit **or** has a problem (bad auth, billing failure, repeated errors).
 - R5. Optional user-set spend caps per account (only applies to API-key accounts).
 - R6. A usage view per account: tokens used, spend, rate-limit/usage status.
-- R7. **An xAI API key is required** before the app can be used, because it powers Grok bot. (A SuperGrok subscription alone doesn't include API access; see [Spike 1](spikes/01-subscription-auth.md).)
+- R7. **At least one provider account is needed; no specific provider is required.** The manager is the first provider in the manager order (default xAI → Anthropic → OpenAI → Google) with a usable account. The order can be changed in settings. (Grok bot needs an xAI **API** key: a SuperGrok subscription alone doesn't include API access; see [Spike 1](spikes/01-subscription-auth.md).)
 
 ### Prompting & orchestration
 - R8. Output mode selector next to the composer: Cheapest / Balanced / Best / Fastest.
 - R9. Plan mode selector: Auto / Review. In Review, the user can change any subtask's model, effort level or wording, add/remove subtasks, then run.
 - R10. The user can also force a specific model ("use Claude for this") as an override.
-- R11. Grok bot splits work into subtasks and runs independent ones **in parallel** across providers.
-- R12. Grok bot **compiles** the outputs into the final answer. It assembles and connects them but does not rewrite their content. Raw per-model outputs stay viewable.
-- R13. Grok bot uses a maintained **model knowledge base** (strengths, cost, speed, context, modalities) and **learns the user's preferences** from feedback.
-- R14. If Grok bot fails, a backup manager takes over automatically.
+- R11. The manager splits work into subtasks and runs independent ones **in parallel** across providers.
+- R12. The manager **compiles** the outputs into the final answer. It assembles and connects them but does not rewrite their content. Raw per-model outputs stay viewable.
+- R13. The manager uses a maintained **model knowledge base** (strengths, cost, speed, context, modalities) and **learns the user's preferences** from feedback.
+- R14. If the manager fails, the next provider in the manager order takes over automatically.
 - R15. A live **activity strip** shows each active model with a small status bar (queued / working / done / failed).
 - R16. A cost and token estimate before running (shown in Review mode). A per-message breakdown after. Running totals.
 - R17. Models use the **providers' built-in tools** (web search, code execution, etc.). The exception is local projects, where the app itself must perform file and shell actions.

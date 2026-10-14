@@ -4,6 +4,16 @@ Short records of technical decisions: what was chosen, why, and what would make 
 
 ---
 
+### D-009 · Any provider can manage; xAI is optional (2026-10-14)
+**Decision:** No provider is required. The manager is the first provider in the user's **manager order** that has a usable account. The default order is xAI (Grok bot) → Anthropic (Claude) → OpenAI (ChatGPT) → Google (Gemini), and the user can change it. The same list is the fallback order when the active manager fails. This replaces the separate "backup manager".
+**Where:** `rankManagers()` and `DEFAULT_MANAGER_PRIORITY` in `packages/shared/src/orchestration.ts`. The setting is `orchestration.managerPriority`.
+**Why:**
+- Lets people use and test the app without an xAI API account. A SuperGrok subscription doesn't include API access.
+- All four providers' current models handle planning (instruction-following + structured JSON).
+- One list is simpler than a manager plus a separately configured backup.
+
+**Revisit if:** the eval suite ([03 §3](03-orchestration.md#3-model-knowledge-base-registry)) shows a provider plans noticeably worse. The registry can then steer which of its models manage.
+
 ### D-008 · Open source under Apache-2.0 (2026-10-14)
 **Decision:** UltimateLLM is open source under the [Apache License 2.0](../LICENSE), and the GitHub repository is public. `main` is the default branch.
 **Why:**

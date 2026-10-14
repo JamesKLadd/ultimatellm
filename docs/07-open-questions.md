@@ -23,8 +23,8 @@
 | # | Question | Current leaning |
 | --- | --- | --- |
 | Q1 | Should provider credentials sync across devices (end-to-end encrypted) or be entered on each device? | Per device in v1. Optional E2E-encrypted sync later. |
-| Q2 | Default compile strategy when Grok bot can't tell? | `sectioned` (verbatim outputs + short connecting text). |
-| Q3 | Should Grok bot be allowed to **answer directly** when it's the best fit, or always delegate? | Allow it. It's cheaper and faster for simple prompts. |
+| Q2 | Default compile strategy when the manager can't tell? | `sectioned` (verbatim outputs + short connecting text). |
+| Q3 | Should the manager be allowed to **answer directly** when it's the best fit, or always delegate? | Allow it. It's cheaper and faster for simple prompts. |
 | Q4 | Should library artifacts from **local** (non-private) chats sync to the cloud by default? | Yes (R24). Private chats never sync. |
 | Q5 | Offline behavior: what works without internet beyond reading local chats? | Read-only + local models later. |
 | Q6 | Who maintains registry scores? Manual curation vs automated eval runs? | Manual + a small eval suite at first. |

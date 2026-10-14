@@ -12,12 +12,14 @@ Each phase ends with something usable. No dates; quality over speed.
 - ✅ CI: format, lint, typecheck, unit tests, migration drift check, end-to-end tests on Linux; build + end-to-end tests + unsigned installers + packaged-app smoke test on Windows and macOS.
 - **Exit:** an empty app shell that builds and runs on Windows and macOS, with CI green.
 
-## Phase 1 – v1 MVP: multi-provider chat with Grok bot
+## Phase 1 – v1 MVP: multi-provider chat with the manager
 - UltimateLLM account sign-in (Supabase Auth).
 - Provider accounts for **xAI, OpenAI, Anthropic, Google**: API keys for all four, plus **Continue with ChatGPT** (plan usage) for OpenAI. Priority list UI. Failover, with opt-in plan → API-key fallback. Spend caps. Health checks.
-- Onboarding: xAI API key required. Explain plan-included API credits (Claude Max, Google AI Pro/Ultra).
+- Onboarding: connect at least one provider (any). Explain plan-included API credits (Claude Max, Google AI Pro/Ultra) and the free Gemini API tier.
+- Manager order setting (default xAI → Anthropic → OpenAI → Google) and a "Manager: …" indicator ([D-009](decisions.md)).
+- **Development mock provider** (dev builds only): fake models with scripted responses, so the whole flow can be tried without any accounts. The end-to-end tests use it too.
 - Model registry v1 (bundled snapshot + remote update) for the four providers.
-- Grok bot: triage → plan → DAG executor → compile, with all **4 output modes** and both **plan modes** (Auto / Review), user overrides, backup manager.
+- The manager: triage → plan → DAG executor → compile, with all **4 output modes** and both **plan modes** (Auto / Review), user overrides, fallback to the next provider in the manager order.
 - Chat UI: sidebar, conversation, composer with mode pickers, **live model activity strip**, plan card, sources panel, cost/token display.
 - Chat kinds: cloud, local, private.
 - Usage page per account.

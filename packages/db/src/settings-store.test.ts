@@ -59,6 +59,23 @@ describe('settings store', () => {
     expect(createSettingsStore(db).get('appearance.theme')).toBe('system');
   });
 
+  it('stores the manager order and hands out copies of the default', () => {
+    const store = createSettingsStore(open().db);
+    const order = store.get('orchestration.managerPriority');
+    expect(order).toEqual(['xai', 'anthropic', 'openai', 'google']);
+    order.reverse();
+    expect(store.get('orchestration.managerPriority')[0]).toBe('xai');
+
+    store.set('orchestration.managerPriority', ['anthropic', 'google', 'openai', 'xai']);
+    expect(store.get('orchestration.managerPriority')).toEqual([
+      'anthropic',
+      'google',
+      'openai',
+      'xai',
+    ]);
+    expect(() => store.set('orchestration.managerPriority', ['xai', 'xai'])).toThrow();
+  });
+
   it('persists values across restarts and re-running migrations is safe', () => {
     const file = tempDbFile();
 

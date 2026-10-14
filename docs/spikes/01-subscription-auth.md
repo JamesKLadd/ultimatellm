@@ -13,7 +13,7 @@ API keys are **not** required everywhere. One provider now officially supports p
 | **Google** | ❌ **No.** Reusing Gemini CLI's login breaks the terms, and accounts have been suspended for it. | Gemini API key (AI Studio). | **AI Pro: $10/mo, AI Ultra: $100/mo** in Google Cloud credits that can pay for the Gemini API. There's also a free tier. |
 | **xAI** | ⚠️ **Partners only.** SuperGrok OAuth exists for selected tools (OpenCode, Warp) but there's no public developer program. | xAI API key. Revisit when xAI opens the program. | Nothing today: SuperGrok doesn't fund API usage. |
 
-> **Change to requirement R7:** Grok bot needs an **xAI API account with credits**. A SuperGrok subscription doesn't give API access, so "requires a premium Grok subscription" should become "requires an xAI API key". The manager mostly uses fast, cheap Grok models, so this cost should stay small.
+> **Change to requirement R7:** Grok bot needs an **xAI API account with credits**. A SuperGrok subscription doesn't give API access. *Update (2026-10-14):* xAI is now optional altogether. Without an xAI key, the manager role goes to the next provider in the manager order: Claude, then ChatGPT, then Gemini ([D-009](../decisions.md)).
 
 ---
 

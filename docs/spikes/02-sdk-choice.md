@@ -23,7 +23,7 @@ Packages were installed at the newest versions at least 7 days old (`ai@7.0.131`
 | **Effort / thinking levels** | ✅ `providerOptions` | See the effort mapping below. All four verified on the outgoing request. |
 | Built-in **web search** | ✅ all four | `openai.tools.webSearch`, `anthropic.tools.webSearch_20260318`, `google.tools.googleSearch`, `xai.tools.webSearch` (+ `xSearch`). |
 | Built-in **code execution** | ✅ all four | `openai.tools.codeInterpreter`, `anthropic.tools.codeExecution_20260120`, `google.tools.codeExecution`, `xai.tools.codeExecution`. |
-| **Structured output** (Grok bot's plan as JSON, checked with Zod) | ✅ `generateObject` / `Output.object` | Zod 4 schemas accepted directly. |
+| **Structured output** (the manager's plan as JSON, checked with Zod) | ✅ `generateObject` / `Output.object` | Zod 4 schemas accepted directly. |
 | **Image generation** | ✅ `generateImage` | OpenAI `gpt-image-*`, Google `gemini-*-image` / "nano banana", xAI `grok-imagine-image*`. Anthropic has none. |
 | **Video generation** (phase 3) | ✅ `experimental_generateVideo` | Google Veo 3.x, xAI `grok-imagine-video*`. |
 | **Voice input** (transcription) | ✅ `transcribe` | OpenAI, Google, xAI transcription models. |
