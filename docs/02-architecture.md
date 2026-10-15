@@ -70,10 +70,10 @@ ultimatellm/
 │  ├─ shared/             types, Zod schemas, IPC contract, settings definitions
 │  ├─ db/                 Drizzle schema, migrations, data access (local SQLite)
 │  ├─ ui/                 shared React components + design tokens (reusable for web/mobile later)
-│  ├─ core/               orchestrator: manager selection, replies with failover (planner/executor in 1b)
+│  ├─ core/               orchestrator: triage + planning, workflow executor, workspace tools, failover
 │  ├─ providers/          adapter per provider (AI SDK), error classification, model registry, mock provider
 │  ├─ accounts/           encrypted keys, validation, priority lists, account health
-│  ├─ registry/           (planned) model knowledge base schema + bundled snapshot
+│  ├─ registry/           model knowledge base: schema, bundled data, pricing, routing rules
 │  └─ agent/              (planned) coding-agent loop + tools (fs, shell, git) + permission engine
 └─ docs/
 ```
@@ -100,11 +100,12 @@ provider_account             id, provider, label, auth_type(api_key|chatgpt_plan
                              spend_cap, status, cooldown_until  (+ secret ref → keychain)
 usage_event                  account_id, model, input/output/reasoning tokens, cost, ts, message_id
 chat                         id, kind(cloud|local|private), project_id?, title, created_at
-message                      id, chat_id, role, content, plan_id?, mode, created_at
-plan                         id, message_id, manager_model, output_mode, plan_mode, json, status
-subtask                      id, plan_id, depends_on[], provider, model, effort, prompt,
-                             status, output, account_id, tokens, cost, latency_ms
-feedback                     message_id|subtask_id, rating, note, ts
+message                      id, chat_id, role, content, status, output_mode, tokens, cost, created_at
+plan                         message_id, kind(direct|workflow), summary, spec, manager, plan_mode
+plan_step                    message_id, key, kind(plan|task|wrapup), title, instructions, depends_on[],
+                             outputs[], provider, model, effort, account, status, report, tokens, cost, times
+workspace_file               chat_id, message_id, step, path, version, content, mime, size, created_at
+feedback                     message_id|step, rating, note, ts
 project                      id, kind(local|cloud), name, path?, github_repo?, instructions
 project_memory               project_id, content, updated_at
 artifact                     id, project_id?, type(doc|image|video|audio), title, tags[]

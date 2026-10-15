@@ -24,26 +24,40 @@ Delivered in milestones, each one testable on its own.
 - Streaming chat UI: conversation with Markdown, live activity strip, Stop, local chat history in the sidebar.
 - **Mock providers** for development and tests (`pnpm dev:mock`): offline models with scripted replies ([D-010](decisions.md)).
 
-### 1b – The real manager: planning and routing
-- Model registry v1 (pricing, speed, per-task scores; bundled + remote update).
-- Triage → plan → DAG executor → compile, with all **4 output modes** and both **plan modes** (Auto / Review plan card), user overrides (`@claude`).
-- Activity strip with one status bar per active model, sources panel, cost/token display.
+### 1b – The workflow manager
+- ✅ Model registry v1 (`packages/registry`): prices, speed, per-task scores, manager models, `@mention` names; routing rules per output mode.
+- Registry updates: the app downloads newer versions of the registry file from the repository.
+- **Triage:** the manager either answers directly (picking the model and effort) or plans a **workflow**. `@mentions` pin a model and skip planning.
+- **Workflows:** a shared **spec** (file layout, interfaces, data formats) plus a task graph, each task assigned to the best usable model for it. Independent tasks run in parallel, with account and model failover.
+- **Workspace:** every chat has versioned files. Tasks write them with tools (`list_files`, `read_file`, `write_file`); follow-up prompts edit them. Files panel with viewer and export to a folder.
+- **Wrap-up:** the manager's closing message lists what was made and how to use it, without rewriting the files.
+- Both **plan modes**: Auto, and Review (a plan card to edit the spec, tasks, models and effort, then Run). Activity strip with one status bar per task, Sources view and cost per message.
 
-### 1c – Plans, limits and usage
+### 1c – Tools: research and media
+- Provider **web search** for research tasks, with sources.
+- **Image generation** (Gemini, Grok Imagine, OpenAI) writing images into the workspace, routed by output mode.
+- Registry **capability flags**: a task that needs a tool goes to a provider that has it.
+
+### 1d – Integrate and preview
+- An **integration** step assembles the project from the workspace.
+- A **sandboxed preview** window for web results (HTML/JS games and apps).
+- Errors from the preview feed **one automatic fix round**.
+
+### 1e – Plans, limits and usage
 - **Continue with ChatGPT** (plan usage) for OpenAI, with opt-in plan → API-key fallback.
 - Spend caps per account, health checks, usage page per account.
 
-### 1d – UltimateLLM accounts and sync
+### 1f – UltimateLLM accounts and sync
 - UltimateLLM sign-in (Supabase Auth). Chat kinds: cloud, local, private.
 
-### 1e – Library and images
-- Image generation through the planner. Library: auto-save images, save docs, tags + search, cloud sync.
+### 1g – Library and polish
+- Library: auto-save images and files, tags + search, cloud sync.
 - Command palette and more keyboard shortcuts.
 
 **Phase 1 exit:** daily use as the main AI app.
 
 ## Phase 2 – Local projects & coding agent
-- Local projects: folder, instructions, memory, files.
+- Local projects: folder, instructions, memory, files. The workspace tools from 1b and the integrate/preview loop from 1d work on a real folder.
 - Coding agent tool loop, diff viewer, integrated terminal.
 - Plan-funded agent backends where allowed: **Codex app-server** with the ChatGPT-plan token, and an optional **Claude Code bridge** that runs the user's own signed-in Claude Code (confirm with Anthropic before shipping publicly; see [Spike 1](spikes/01-subscription-auth.md)).
 - Approval / Auto permission modes, deny list, action timeline, checkpoints.

@@ -35,15 +35,15 @@ Personal project for now. It may be released later, likely free because users br
 
 ### Prompting & orchestration
 - R8. Output mode selector next to the composer: Cheapest / Balanced / Best / Fastest.
-- R9. Plan mode selector: Auto / Review. In Review, the user can change any subtask's model, effort level or wording, add/remove subtasks, then run.
-- R10. The user can also force a specific model ("use Claude for this") as an override.
-- R11. The manager splits work into subtasks and runs independent ones **in parallel** across providers.
-- R12. The manager **compiles** the outputs into the final answer. It assembles and connects them but does not rewrite their content. Raw per-model outputs stay viewable.
+- R9. Plan mode selector: Auto / Review. In Review, the user can edit the workflow's spec, change any task's model, effort level or instructions, add/remove tasks, then run.
+- R10. The user can also force a specific model ("@claude explain this") as an override.
+- R11. For requests with distinct parts, the manager plans a **workflow**: a shared spec plus tasks, each assigned to the model best suited to it (by capability and strength). Independent tasks run **in parallel** across providers. Simple requests get a direct answer from the best-suited model.
+- R12. Workflow results are **files** in the chat's workspace. The manager presents them in a closing message but does not rewrite them. Every task's output and model stay viewable.
 - R13. The manager uses a maintained **model knowledge base** (strengths, cost, speed, context, modalities) and **learns the user's preferences** from feedback.
 - R14. If the manager fails, the next provider in the manager order takes over automatically.
 - R15. A live **activity strip** shows each active model with a small status bar (queued / working / done / failed).
 - R16. A cost and token estimate before running (shown in Review mode). A per-message breakdown after. Running totals.
-- R17. Models use the **providers' built-in tools** (web search, code execution, etc.). The exception is local projects, where the app itself must perform file and shell actions.
+- R17. Models use the **providers' built-in tools** (web search, image generation, code execution, etc.). The app provides its own tools where providers can't: workspace files for workflows, and files and shell for local projects.
 
 ### Projects
 - R18. Local projects: a coding agent that works in a folder on disk, like Claude Code / Codex desktop.

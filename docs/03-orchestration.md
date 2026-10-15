@@ -1,148 +1,186 @@
 # 03 – Orchestration (the manager)
 
-The **manager** is the heart of the app. By default it's **Grok bot** (xAI), but no provider is required: the role goes to the first provider in the user's manager order that they have an account for (see [§7](#7-choosing-the-manager)). It has four jobs: **plan → execute → monitor → compile**.
+The **manager** is the heart of the app. By default it's **Grok bot** (xAI), but no provider is required: the role goes to the first provider in the user's manager order that they have an account for (see [§7](#7-choosing-the-manager)).
+
+For every prompt the manager decides between two shapes of work:
+
+- **Direct answer:** one model answers in the chat. The manager only picks which model and how hard it should think. Most questions, explanations and short pieces of writing go this way.
+- **Workflow:** the manager writes a **shared spec**, breaks the work into **tasks**, and assigns each task to the model best suited to it. Tasks run in parallel where they can and write their results as **files** in the chat's workspace. The manager then sums up what was made.
+
+Example: *"Create a tennis game"* could become a workflow like this:
+
+| Task | Goes to | Why | Writes |
+| --- | --- | --- | --- |
+| Research top players and turn them into stat values | Grok (live search, from milestone 1c) | Knows current results | `data/players.json` |
+| Create the court, player and ball graphics | Gemini (image generation, from 1c) | Makes images | `assets/*.png` |
+| Write the game code | Claude | Strongest at code | `index.html`, `src/*.js` |
+| Set up how the game is built and run | ChatGPT | Good at tooling and config | `README.md`, `package.json` |
+
+The models are chosen by **capability and strength** from the model registry, not by brand. The example above is what that typically produces when the user has all four accounts. With fewer accounts, the same tasks go to whatever the user has. The user can always force a model with an `@mention`.
 
 ```mermaid
 sequenceDiagram
   participant U as User
-  participant G as Manager (Grok bot by default)
+  participant M as Manager
   participant X as Executor
-  participant P as Providers
-  U->>G: prompt + output mode + plan mode (+ overrides)
-  G->>G: triage: simple or multi-step?
-  G-->>U: Plan (Review mode: user edits/approves)
-  U->>X: approved plan
-  par independent subtasks
-    X->>P: subtask A → model 1
-    X->>P: subtask B → model 2
+  participant W as Workspace (files)
+  participant P as Models
+  U->>M: prompt + output mode + plan mode
+  M->>M: triage: direct answer or workflow?
+  alt direct
+    M->>P: the chosen model answers in the chat
+  else workflow
+    M-->>U: plan: spec + tasks (Review mode: edit, then Run)
+    par independent tasks
+      X->>P: task A (model 1) → writes files
+      X->>P: task B (model 2) → writes files
+    end
+    X->>P: task C (needs A and B) reads their files → writes files
+    P->>W: files
+    X->>M: task reports + file list
+    M-->>U: wrap-up message + files panel
   end
-  X->>P: subtask C (depends on A, B) → model 3
-  X-->>U: live status per model
-  X->>G: all outputs
-  G-->>U: compiled answer (+ raw outputs viewable)
 ```
 
-## 1. Triage (cost and latency guard)
+## 1. Triage
 
-Not every prompt needs splitting. Running a full plan for "what's 2+2" wastes money and time. The manager first classifies the prompt:
+The manager's first decision, made in the same call as the plan:
 
-- **Direct:** one subtask, routed to one model. Planning is a single cheap call (or the manager answers itself if it is the best fit for the mode).
-- **Orchestrated:** a multi-subtask plan.
+- **Direct** when one model can handle the request well: questions, explanations, advice, a single piece of writing or code, most follow-ups. A direct answer streams in the chat like any AI app; the manager only chose the model.
+- **Workflow** when the request asks to *produce something with distinct parts* that benefit from different strengths or tools: an app or game, a researched report with data, a set of documents, a site with copy and graphics.
 
-Triage and planning use the manager provider's **fast tier** (e.g. a fast Grok model). Its stronger reasoning tier is used only for complex plans or in `Best` mode. The registry marks which models each provider uses for these roles.
+Splitting a simple question across models makes answers slower, pricier and less coherent, so the planner is told to prefer direct answers unless parts are genuinely separable.
+
+**No planning call** when the user pins a model with an `@mention` (`@claude`, `@gpt`, `@gemini`, `@grok`, or a model like `@opus`): that model answers directly.
 
 ## 2. Planning
 
-The manager returns a **structured plan** (JSON, validated with Zod). If the output fails validation, it is retried once with the validation error included.
+The manager returns a **structured plan** (JSON validated with Zod, using each provider's structured-output mode). If the output can't be parsed, it is retried once with the error. If planning fails entirely, the prompt falls back to a direct answer from the manager's own model, with a note.
 
 ```ts
 type Plan = {
-  summary: string;                 // one line, shown to the user
-  outputMode: "cheapest" | "balanced" | "best" | "fastest";
-  subtasks: Subtask[];
-  compile: { strategy: "concatenate" | "sectioned" | "stitched"; instructions: string };
-  estimate: { costUsd: number; seconds: number };
+  kind: "direct" | "workflow";
+  summary: string;              // one line, shown to the user
+  // Direct answers
+  category: TaskCategory;
+  model: string; effort: Effort;
+  // Workflows
+  spec: string;                 // the shared contract every task receives (Markdown)
+  tasks: Task[];
 };
 
-type Subtask = {
+type Task = {
   id: string;
-  title: string;                   // e.g. "Write the SQL schema"
-  prompt: string;                  // exact prompt sent to the worker model
-  category: TaskCategory;          // from the registry taxonomy
-  dependsOn: string[];             // ids, makes the plan a DAG
-  model: { provider: Provider; id: string; effort: "none" | "low" | "medium" | "high" | "max" };
-  fallbacks: ModelRef[];           // ordered alternatives if this model is unavailable
-  tools: ("web_search" | "code_execution" | "image_generation" | ...)[];
-  rationale: string;               // why this model, shown in Review mode
+  title: string;                // e.g. "Write the game code"
+  instructions: string;         // what to do, referring to the spec
+  category: TaskCategory;       // from the registry taxonomy
+  model: string; effort: Effort;
+  dependsOn: string[];          // task ids: makes the plan a DAG
+  outputs: string[];            // files this task must write, from the spec
+  rationale: string;            // why this model, shown in the plan card
 };
 ```
 
-**Hard constraints are enforced in code, not trusted to the LLM.** Before a plan is accepted, the app checks that each chosen model belongs to a signed-in provider with a usable account, that the context fits, and that requested tools exist on that model. Anything that fails is swapped to the subtask's first valid fallback, or the planner is re-asked.
+### The shared spec
 
-### Output modes
+Separately written parts only fit together if they agree on the details up front. Before anything runs, the manager writes a short **spec** that every task receives:
 
-Each mode is a set of weights given to the planner and used by the code-side validator to rank fallbacks:
+- the goal and the deliverable (what the user will open or read),
+- the **file layout**: every file, who writes it, what it contains,
+- the **interfaces** between parts: function names, asset names and sizes, data formats (e.g. the fields in `players.json`),
+- style and constraints (language, framework, no external dependencies, …).
 
-| Mode | Quality | Cost | Speed | Behavior |
-| --- | --- | --- | --- | --- |
-| Cheapest | low weight | **high** | low | Smallest model that meets the task's minimum quality bar. Low effort. Splits less. |
-| Balanced | medium | medium | medium | Mid-tier models. Escalates only for hard categories (complex code, math). |
-| Best | **high** | low | low | Frontier models, high effort. More verification subtasks allowed. |
-| Fastest | medium | low | **high** | Low-latency models, low/no reasoning effort. Maximum parallelism. Fewer dependent steps. |
+Tasks must follow the spec. If a task can't, it says so in its report and the wrap-up mentions it.
 
-**Direct answers (milestone 1a).** Before planning exists, the manager provider answers each prompt itself, with the model and effort picked from the output mode (`OUTPUT_MODE_SETTINGS` in `packages/core`):
+### Hard constraints are enforced in code, not trusted to the LLM
 
-| Mode | Model tier | Effort | Example (Anthropic) |
-| --- | --- | --- | --- |
-| Cheapest | fast | low | Claude Haiku 5.5 |
-| Balanced | balanced | medium | Claude Sonnet 5.5 |
-| Best | best | high | Claude Opus 5.5 |
-| Fastest | fast | none | Claude Haiku 5.5 |
+Before a plan runs, the app checks it and repairs what it can:
 
-If the account can't use that model (e.g. a free-tier key), the next tier down is tried.
+- every model belongs to a provider with a usable account (otherwise: the best usable model for the task's category and output mode),
+- effort levels exist on the chosen model (otherwise: the nearest one),
+- `dependsOn` only points at earlier tasks (which also rules out cycles),
+- output paths are safe relative paths, and each file is written by only one task,
+- at most 8 tasks.
+
+Each task also gets **fallback models**: the next best usable models for its category and mode.
+
+### Choosing models: output modes
+
+The planner gets the usable models (price, speed, context, notes) and, for each task category, the registry's recommendation for the current output mode. The same ranking (`rankModels()` in `packages/registry`) picks fallbacks and repairs invalid choices:
+
+| Mode | Rule | Effort |
+| --- | --- | --- |
+| Cheapest | The cheapest model whose score for the category clears a quality bar (60; 66 for hard categories such as coding and math). | low |
+| Balanced | Mid-tier models that clear a higher bar (78; 84 for hard categories), best score first. Escalates to the cheapest stronger model only when no mid-tier model clears it. | medium |
+| Best | The highest score for the category. | high |
+| Fastest | The quickest model that clears the quality bar. | none / lowest |
+
+Fastest mode also asks for fewer, more parallel tasks; Cheapest asks for fewer tasks overall.
 
 ### Plan modes
-- **Auto:** the plan runs immediately. It still appears in a collapsible "Plan" panel.
-- **Review:** the plan card shows subtasks, models, effort, rationale and the cost/time estimate. The user can change the model or effort (dropdowns limited to available models), edit a subtask prompt, add or delete subtasks, then press **Run**.
+- **Auto:** the plan runs immediately. It still appears as a collapsible plan in the chat.
+- **Review:** a plan card shows the summary, the spec, and each task with its model, effort, files and rationale, plus a cost/time estimate. The user can edit the spec and task instructions, change models and effort (dropdowns limited to usable models), add or delete tasks, then press **Run**.
 
 ### Overrides
-The user can pin a model for the whole prompt (`@claude` mention or a composer picker) or lock it in Review mode. Pinned choices are passed to the planner as hard constraints.
+`@mentions` pin a provider (its model for the output mode) or a specific model, and skip planning. A mentioned model that can't be used is an error, not a silent substitution.
 
 ## 3. Model knowledge base (registry)
 
-The manager doesn't need fine-tuning. It needs **good, current data in its context** on every planning call. The registry is versioned JSON, bundled with the app and updated from a feed hosted with the backend, so new models don't need an app release.
+The manager doesn't need fine-tuning. It needs **good, current data in its context** on every planning call. The registry (`packages/registry`) is versioned JSON, bundled with the app (`packages/registry/data/registry.v1.json`). Installed apps also download the published copy of that file from the repository's `main` branch and use it when its `version` is newer, so new models and prices don't need an app release.
 
 ```ts
 type ModelEntry = {
-  provider: Provider; id: string; displayName: string; released: string;
+  id: string; provider: Provider; name: string;
+  tier: "fast" | "balanced" | "best";
   status: "active" | "deprecated";
-  modalities: { in: Modality[]; out: Modality[] };      // text, image, audio, video
-  contextTokens: number; maxOutputTokens: number;
-  effortLevels: Effort[];                               // mapped to each provider's own param
-  tools: ToolKind[];
-  pricing: { inputPerM: number; outputPerM: number; cachedInputPerM?: number; perImage?: number };
-  speed: { ttftMs: number; tokensPerSec: number };       // measured or published
-  scores: Partial<Record<TaskCategory, number>>;         // 0–100, curated from benchmarks + evals
-  notes: string;                                        // short, human-written strengths/weaknesses
-  manager?: "fast" | "strong";                          // models this provider uses when it's the manager
+  aliases: string[];              // other API IDs for the same model
+  mentions: string[];             // extra @mention names, e.g. "opus"
+  manager?: "fast" | "strong";    // the models a provider uses when it manages
+  contextTokens: number; maxOutputTokens?: number;
+  efforts: Effort[];              // levels we can set; empty = provider default
+  pricing: PricePeriod[];         // $/1M tokens; dated periods, long-context and cached-input rates
+  speed: { tokensPerSec: number; latencyMs: number };
+  scores: Record<TaskCategory, number>;   // 0–100
+  notes: string;                  // short, human-written strengths/weaknesses
+  // From milestone 1c: capabilities (web_search, image_generation, …) and image models
 };
 
 type TaskCategory =
-  | "coding" | "code_review" | "debugging" | "math" | "reasoning" | "research_web"
-  | "long_context_analysis" | "creative_writing" | "technical_writing" | "summarization"
-  | "translation" | "data_extraction" | "vision_understanding"
-  | "image_generation" | "video_generation" | "audio_generation" | "chat";
+  | "chat" | "coding" | "code_review" | "debugging" | "math" | "reasoning"
+  | "creative_writing" | "technical_writing" | "summarization" | "translation"
+  | "data_extraction" | "long_context_analysis";
+  // Research, vision and media categories arrive with tools (1c).
 ```
 
-Only the models **the user can actually use** are put in the planner's prompt (filtered by signed-in providers), together with mode weights and the user's preferences. This keeps the prompt short and the choices valid.
+Only the models **the user can actually use** are put in the planner's prompt. This keeps the prompt short and the choices valid.
 
-**Keeping it accurate:** scores come from public benchmarks plus a small **in-house eval suite** (a fixed set of prompts per category, graded by rubric). It is re-run when new models launch. This suite is also how we test that routing improves over time, and how well each provider performs as manager.
+**Keeping it accurate:** v1 scores combine public leaderboards (the Artificial Analysis index, October 2026) with each provider's guidance. They are rough priors. A small **in-house eval suite** (a fixed set of prompts per category, graded by rubric) will replace them and is re-run when new models launch. The same suite tests how well each provider performs as manager.
 
 ## 4. Personalization
 
-- 👍/👎 on the final answer **and** on individual subtask outputs. An optional "why" tag: wrong, too slow, too expensive, style.
+- 👍/👎 on the final answer **and** on individual task results. An optional "why" tag: wrong, too slow, too expensive, style.
 - An explicit setting: preferred/avoided providers and models per category.
 - These become a **preference profile** (per category: provider/model affinity scores, updated with simple decay-weighted averages). It is added to the planner prompt and applied as a tiebreaker in the code-side ranking.
 - Stored with the user's cloud account so it follows them across devices. Private chats can contribute only if the user allows it.
 
 ## 5. Execution
 
-- The executor runs the plan as a **DAG**. Each subtask starts as soon as its dependencies finish. Independent subtasks run in parallel.
-- Concurrency limits apply per provider account (respects rate limits) and globally.
-- Each subtask gets an account from the account pool ([04](04-providers-and-accounts.md)). On a usage-limit or account error, the pool fails over to the next account. If none is left, the executor tries the subtask's model fallbacks.
-- Dependent subtasks receive their dependencies' outputs as context (trimmed or summarized if too long).
-- Streaming status events go to the UI: `queued → running (tokens streaming) → done | failed | retrying(account switch)`.
-- The user can **stop** the whole run or cancel/retry an individual subtask.
+- The executor runs the plan as a **DAG**. Each task starts as soon as its dependencies finish; independent tasks run in parallel (up to 4 at a time).
+- Each task runs as a short **tool loop** with the chosen model. It receives the spec, its instructions, the list of files in the workspace and the files its dependencies wrote. Its tools are `list_files`, `read_file` and `write_file` (from 1c also the provider's web search and image generation). It ends with a short report.
+- Each task gets an account from the account pool ([04](04-providers-and-accounts.md)). On a usage-limit or account error, the pool fails over to the next account; when none is left, the task moves to its fallback models.
+- A task that fails after every fallback is marked failed. Tasks that depend on it are skipped; the others still run. A task that already streamed output isn't silently restarted.
+- Status events stream to the UI: `queued → running → done | failed | skipped`, with the model, account and any account switch.
+- The user can stop the whole run at any time. Files written so far are kept.
 
-## 6. Compilation
+## 6. The workspace and the wrap-up
 
-Per R12, the manager **assembles without rewriting**:
+**Workspace.** Every chat has a workspace of files. Tasks write into it, and later prompts in the same chat see and change the same files ("make the ball faster" edits `src/game.js`). Every write is kept as a version, labelled with the task and model that wrote it. The files panel shows the current files; they can be viewed and exported to a folder. Files live in the local database for now; local projects ([05](05-projects-and-library.md)) later point the same tools at a real folder.
 
-- `concatenate`: outputs in order, with short headings. No model call. Instant and free.
-- `sectioned`: the manager writes a short intro and transitions between sections. Worker outputs are inserted **verbatim**.
-- `stitched`: only when the user asks for one integrated answer (e.g. a single essay). The manager merges the outputs. Flagged in the UI as "merged by <manager>" (e.g. "merged by Grok").
+**Wrap-up.** Per R12, the manager presents results **without rewriting them**: the files are the deliverable. After the tasks finish, the manager writes the chat message: what was made, which file is which, how to use it, and anything that failed or deviated from the spec. A direct answer needs no wrap-up; the model's answer is the message.
 
-Every answer has a **"Sources"** panel listing which model produced which part, with the raw outputs, tokens and cost.
+Every message has a **Sources** view listing who did what: the planning call, each task (model, account, effort, tokens, cost, time, files written, report) and the wrap-up.
+
+From milestone 1d an **integration** step goes further: it assembles the project, opens web results (HTML/JS games and apps) in a sandboxed preview, and feeds errors back for one automatic fix round.
 
 ## 7. Choosing the manager
 
@@ -150,16 +188,17 @@ No provider is required. One list decides both who manages and who takes over:
 
 - **Manager order:** default **xAI (Grok bot) → Anthropic (Claude) → OpenAI (ChatGPT) → Google (Gemini)**. The user can reorder it in settings (`orchestration.managerPriority`).
 - **Selection:** the first provider in the order with a **usable account** (active, under its spend cap, not rate-limited) is the manager. Implemented in `rankManagers()` in `packages/shared/src/orchestration.ts`.
+- **Models:** the registry marks each provider's `fast` manager model (planning, wrap-ups) and `strong` one (planning in Best mode).
 - **Accounts:** manager calls go through that provider's account pool like any other request, so its priority list and failover apply ([04](04-providers-and-accounts.md)).
 - **Fallback:** if all of the manager provider's accounts fail (outage, limits, auth), the next provider in the order takes over for that prompt. Planning needs strong instruction-following and reliable JSON, which all four providers' current models offer.
-- **When nothing can manage** (e.g. every account is rate-limited): send the prompt directly to the user's default model and say that planning is unavailable.
+- **When planning fails** for another reason (e.g. unparseable output twice), the manager's own model answers directly and the message says planning was unavailable.
 
-The UI always shows who is managing, e.g. "Manager: Claude", or "Manager: Claude (Grok unavailable)" during a fallback.
+The UI always shows who is managing, e.g. "Manager: Claude".
 
-**To verify in Phase 1:** structured output through a ChatGPT-plan account, given its request restrictions ([Spike 1](spikes/01-subscription-auth.md)).
+**To verify in milestone 1e:** structured output through a ChatGPT-plan account, given its request restrictions ([Spike 1](spikes/01-subscription-auth.md)).
 
 ## 8. Cost & tokens
 
-- **Before running:** an estimate based on the registry's pricing and expected token counts per subtask. Shown in Review mode and as a hover tooltip in Auto mode.
-- **After running:** actual tokens (input / cached / output / reasoning) and cost per subtask and per message, including the manager's own calls.
-- **Running totals:** per chat, per project, per account, per day/month. These feed the usage page and spend caps.
+- **Before running:** an estimate based on the registry's pricing and expected token counts per task. Shown on the Review plan card.
+- **After running:** actual tokens (input / cached / output / reasoning) and cost per task and per message, including the manager's own calls. Costs are at list prices; free tiers and plan credits aren't visible to the app.
+- **Running totals:** per chat, per project, per account, per day/month. These feed the usage page and spend caps (milestone 1e).

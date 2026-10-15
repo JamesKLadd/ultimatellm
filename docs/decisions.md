@@ -4,6 +4,16 @@ Short records of technical decisions: what was chosen, why, and what would make 
 
 ---
 
+### D-011 · The manager runs workflows that write files (2026-10-15)
+**Decision:** The manager either answers directly (one model, chosen per task and output mode) or plans a **workflow**: a shared spec plus tasks, each assigned to the best usable model for it. Workflow tasks write their results as **files** in a per-chat workspace, using tools (`list_files`, `read_file`, `write_file`). The manager's wrap-up message presents the files instead of stitching text answers together. Milestones change accordingly: 1b workflows, 1c tools (web search, image generation), 1d integrate and preview; the earlier 1c–1e become 1e–1g.
+**Why:**
+- The value of several providers is in their different **capabilities** (code, image generation, live search), not in splitting one text answer, which top models already write well alone.
+- Parts written separately only fit together if they share a contract, hence the spec, and if the results are concrete files a later step can check and run.
+- The same workspace and tools become the base of the coding agent for local projects (Phase 2).
+
+**Replaces:** the compile strategies (`concatenate` / `sectioned` / `stitched`) from the first design. Direct answers stay the default for ordinary chat.
+**Revisit if:** the eval suite shows workflows rarely beat a single strong model for the kinds of requests that trigger them.
+
 ### D-010 · Key storage and mock providers (2026-10-14)
 **Decision:**
 - API keys are encrypted with Electron `safeStorage` (Keychain on macOS, DPAPI on Windows, libsecret/KWallet on Linux). They're stored in a separate `account_secrets` table and are only decrypted in the main process when a request needs them. The UI only ever sees a hint like "…a1b2".

@@ -5,6 +5,7 @@
 | # | Decision | Outcome |
 | --- | --- | --- |
 | D1 | Make UltimateLLM open source? (OpenAI's ChatGPT plan sign-in is open to *open-source and locally hosted* apps.) | ✅ **Yes, Apache-2.0** (2026-10-14). The repository is to be made public. See [D-008](decisions.md). |
+| D2 | Should the manager answer directly when one model is enough, or always delegate? How are workflow results combined? | ✅ Direct answers for ordinary prompts; workflows write files that the manager presents without rewriting (2026-10-15). See [D-011](decisions.md). |
 
 ## Spike 1 – Subscription sign-in vs API keys
 
@@ -23,8 +24,6 @@
 | # | Question | Current leaning |
 | --- | --- | --- |
 | Q1 | Should provider credentials sync across devices (end-to-end encrypted) or be entered on each device? | Per device in v1. Optional E2E-encrypted sync later. |
-| Q2 | Default compile strategy when the manager can't tell? | `sectioned` (verbatim outputs + short connecting text). |
-| Q3 | Should the manager be allowed to **answer directly** when it's the best fit, or always delegate? | Allow it. It's cheaper and faster for simple prompts. |
 | Q4 | Should library artifacts from **local** (non-private) chats sync to the cloud by default? | Yes (R24). Private chats never sync. |
 | Q5 | Offline behavior: what works without internet beyond reading local chats? | Read-only + local models later. |
 | Q6 | Who maintains registry scores? Manual curation vs automated eval runs? | Manual + a small eval suite at first. |
