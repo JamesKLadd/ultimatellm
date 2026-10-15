@@ -9,6 +9,53 @@ export type OutputMode = z.infer<typeof OutputMode>;
 export const PlanMode = z.enum(['auto', 'review']);
 export type PlanMode = z.infer<typeof PlanMode>;
 
+/** Our provider-neutral reasoning-effort scale (see docs/spikes/02-sdk-choice.md). */
+export const Effort = z.enum(['none', 'low', 'medium', 'high', 'max']);
+export type Effort = z.infer<typeof Effort>;
+
+/** Quality/cost tiers of a provider's lineup (e.g. Haiku / Sonnet / Opus). */
+export const ModelTier = z.enum(['fast', 'balanced', 'best']);
+export type ModelTier = z.infer<typeof ModelTier>;
+
+/**
+ * What kind of work a subtask is. The model registry scores every model per
+ * category, and the planner labels each subtask with one. Text-only for now;
+ * web research, vision and media categories arrive with tools and attachments.
+ */
+export const TaskCategory = z.enum([
+  'chat',
+  'coding',
+  'code_review',
+  'debugging',
+  'math',
+  'reasoning',
+  'creative_writing',
+  'technical_writing',
+  'summarization',
+  'translation',
+  'data_extraction',
+  'long_context_analysis',
+]);
+export type TaskCategory = z.infer<typeof TaskCategory>;
+
+/** Categories where Balanced mode escalates to stronger models (docs/03-orchestration.md). */
+export const HARD_TASK_CATEGORIES: ReadonlySet<TaskCategory> = new Set([
+  'coding',
+  'code_review',
+  'debugging',
+  'math',
+  'reasoning',
+]);
+
+/**
+ * How subtask results become the final answer (R12: assemble without rewriting).
+ * - `concatenate`: results in order with headings; no model call
+ * - `sectioned`: the manager adds a short intro and section headings; results stay verbatim
+ * - `stitched`: the manager merges the results into one answer (shown as "merged by …")
+ */
+export const CompileStrategy = z.enum(['concatenate', 'sectioned', 'stitched']);
+export type CompileStrategy = z.infer<typeof CompileStrategy>;
+
 /**
  * Default order for choosing the manager: Grok bot (xAI) first, then Claude,
  * ChatGPT and Gemini. No provider is required; the first one the user has a

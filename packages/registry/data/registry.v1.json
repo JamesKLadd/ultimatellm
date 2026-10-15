@@ -1,0 +1,564 @@
+{
+  "schemaVersion": 1,
+  "version": 2026101500,
+  "updatedAt": "2026-10-15",
+  "models": [
+    {
+      "id": "grok-4.20-0309-non-reasoning",
+      "provider": "xai",
+      "name": "Grok 4.20",
+      "tier": "fast",
+      "aliases": ["grok-4.20-non-reasoning"],
+      "manager": "fast",
+      "contextTokens": 1000000,
+      "efforts": [],
+      "pricing": [
+        {
+          "inputPerM": 1.25,
+          "cachedInputPerM": 0.2,
+          "outputPerM": 2.5,
+          "longContext": {
+            "thresholdTokens": 199999,
+            "inputPerM": 2.5,
+            "cachedInputPerM": 0.4,
+            "outputPerM": 5.0
+          }
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 150,
+        "latencyMs": 600
+      },
+      "scores": {
+        "chat": 71,
+        "coding": 67,
+        "code_review": 69,
+        "debugging": 64,
+        "math": 59,
+        "reasoning": 59,
+        "creative_writing": 71,
+        "technical_writing": 68,
+        "summarization": 68,
+        "translation": 68,
+        "data_extraction": 68,
+        "long_context_analysis": 69
+      },
+      "notes": "xAI's quick non-reasoning model. Instant answers and simple tasks; weaker at math and multi-step reasoning."
+    },
+    {
+      "id": "grok-4.3",
+      "provider": "xai",
+      "name": "Grok 4.3",
+      "tier": "balanced",
+      "manager": "strong",
+      "contextTokens": 1000000,
+      "efforts": [],
+      "pricing": [
+        {
+          "inputPerM": 1.25,
+          "cachedInputPerM": 0.2,
+          "outputPerM": 2.5,
+          "longContext": {
+            "thresholdTokens": 199999,
+            "inputPerM": 2.5,
+            "cachedInputPerM": 0.4,
+            "outputPerM": 5.0
+          }
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 200,
+        "latencyMs": 3000
+      },
+      "scores": {
+        "chat": 83,
+        "coding": 82,
+        "code_review": 81,
+        "debugging": 81,
+        "math": 81,
+        "reasoning": 81,
+        "creative_writing": 83,
+        "technical_writing": 80,
+        "summarization": 80,
+        "translation": 80,
+        "data_extraction": 80,
+        "long_context_analysis": 81
+      },
+      "notes": "Fast, inexpensive xAI reasoning model with a 1M-token context. Tends to be verbose."
+    },
+    {
+      "id": "grok-4.7",
+      "provider": "xai",
+      "name": "Grok 4.7",
+      "tier": "best",
+      "contextTokens": 500000,
+      "efforts": [],
+      "pricing": [
+        {
+          "inputPerM": 2.0,
+          "cachedInputPerM": 0.5,
+          "outputPerM": 6.0,
+          "longContext": {
+            "thresholdTokens": 199999,
+            "inputPerM": 4.0,
+            "cachedInputPerM": 1.0,
+            "outputPerM": 12.0
+          }
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 65,
+        "latencyMs": 7000
+      },
+      "scores": {
+        "chat": 87,
+        "coding": 89,
+        "code_review": 85,
+        "debugging": 87,
+        "math": 85,
+        "reasoning": 85,
+        "creative_writing": 87,
+        "technical_writing": 84,
+        "summarization": 84,
+        "translation": 84,
+        "data_extraction": 84,
+        "long_context_analysis": 82
+      },
+      "notes": "xAI's most capable model; xAI recommends it for code and chat."
+    },
+    {
+      "id": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "name": "Claude Haiku 5.5",
+      "tier": "fast",
+      "mentions": ["haiku"],
+      "manager": "fast",
+      "contextTokens": 1000000,
+      "efforts": ["low", "medium", "high", "max"],
+      "pricing": [
+        {
+          "inputPerM": 0.1,
+          "cachedInputPerM": 0.01,
+          "outputPerM": 0.5,
+          "longContext": {
+            "thresholdTokens": 100000,
+            "inputPerM": 0.5,
+            "cachedInputPerM": 0.05,
+            "outputPerM": 2.5
+          }
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 140,
+        "latencyMs": 1500
+      },
+      "scores": {
+        "chat": 75,
+        "coding": 78,
+        "code_review": 77,
+        "debugging": 77,
+        "math": 72,
+        "reasoning": 73,
+        "creative_writing": 78,
+        "technical_writing": 76,
+        "summarization": 74,
+        "translation": 73,
+        "data_extraction": 74,
+        "long_context_analysis": 71
+      },
+      "notes": "Anthropic's fastest, cheapest model: quick answers, classification, extraction and routing. Prompts over 100k tokens cost 5x."
+    },
+    {
+      "id": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "name": "Claude Sonnet 5.5",
+      "tier": "balanced",
+      "mentions": ["sonnet"],
+      "manager": "strong",
+      "contextTokens": 1000000,
+      "efforts": ["low", "medium", "high", "max"],
+      "pricing": [
+        {
+          "inputPerM": 2.0,
+          "cachedInputPerM": 0.1,
+          "outputPerM": 10.0
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 92,
+        "latencyMs": 1000
+      },
+      "scores": {
+        "chat": 86,
+        "coding": 89,
+        "code_review": 88,
+        "debugging": 88,
+        "math": 83,
+        "reasoning": 84,
+        "creative_writing": 89,
+        "technical_writing": 87,
+        "summarization": 85,
+        "translation": 84,
+        "data_extraction": 85,
+        "long_context_analysis": 86
+      },
+      "notes": "Anthropic's best mix of speed and intelligence. Strong at coding and writing."
+    },
+    {
+      "id": "claude-opus-5-5",
+      "provider": "anthropic",
+      "name": "Claude Opus 5.5",
+      "tier": "best",
+      "mentions": ["opus"],
+      "contextTokens": 1000000,
+      "efforts": ["low", "medium", "high", "max"],
+      "pricing": [
+        {
+          "inputPerM": 4.0,
+          "cachedInputPerM": 0.2,
+          "outputPerM": 20.0
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 74,
+        "latencyMs": 11000
+      },
+      "scores": {
+        "chat": 95,
+        "coding": 98,
+        "code_review": 97,
+        "debugging": 97,
+        "math": 92,
+        "reasoning": 93,
+        "creative_writing": 98,
+        "technical_writing": 96,
+        "summarization": 94,
+        "translation": 93,
+        "data_extraction": 94,
+        "long_context_analysis": 95
+      },
+      "notes": "Anthropic's top model for agentic coding and knowledge work: coding, writing and careful reasoning. Slower."
+    },
+    {
+      "id": "gpt-6-luna",
+      "provider": "openai",
+      "name": "GPT-6 Luna",
+      "tier": "fast",
+      "mentions": ["luna"],
+      "manager": "fast",
+      "contextTokens": 1050000,
+      "maxOutputTokens": 128000,
+      "efforts": ["none", "low", "medium", "high", "max"],
+      "pricing": [
+        {
+          "inputPerM": 0.1,
+          "cachedInputPerM": 0.01,
+          "outputPerM": 0.5,
+          "longContext": {
+            "thresholdTokens": 272000,
+            "inputPerM": 0.2,
+            "cachedInputPerM": 0.02,
+            "outputPerM": 0.75
+          }
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 120,
+        "latencyMs": 1500
+      },
+      "scores": {
+        "chat": 67,
+        "coding": 69,
+        "code_review": 69,
+        "debugging": 69,
+        "math": 71,
+        "reasoning": 70,
+        "creative_writing": 67,
+        "technical_writing": 68,
+        "summarization": 67,
+        "translation": 68,
+        "data_extraction": 69,
+        "long_context_analysis": 67
+      },
+      "notes": "OpenAI's most efficient model for focused, high-volume tasks. Can skip reasoning entirely for speed."
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "provider": "openai",
+      "name": "GPT-6.1 Sol",
+      "tier": "balanced",
+      "mentions": ["sol"],
+      "manager": "strong",
+      "contextTokens": 1050000,
+      "maxOutputTokens": 128000,
+      "efforts": ["low", "medium", "high", "max"],
+      "pricing": [
+        {
+          "inputPerM": 2.0,
+          "cachedInputPerM": 0.1,
+          "outputPerM": 10.0,
+          "longContext": {
+            "thresholdTokens": 272000,
+            "inputPerM": 4.0,
+            "cachedInputPerM": 0.2,
+            "outputPerM": 15.0
+          }
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 47,
+        "latencyMs": 3500
+      },
+      "scores": {
+        "chat": 88,
+        "coding": 90,
+        "code_review": 90,
+        "debugging": 90,
+        "math": 92,
+        "reasoning": 91,
+        "creative_writing": 88,
+        "technical_writing": 89,
+        "summarization": 88,
+        "translation": 89,
+        "data_extraction": 90,
+        "long_context_analysis": 88
+      },
+      "notes": "Near-Astra quality at a fifth of the price. Strong at math, reasoning and structured output."
+    },
+    {
+      "id": "gpt-6-astra",
+      "provider": "openai",
+      "name": "GPT-6 Astra",
+      "tier": "best",
+      "mentions": ["astra"],
+      "contextTokens": 1050000,
+      "maxOutputTokens": 128000,
+      "efforts": ["low", "medium", "high", "max"],
+      "pricing": [
+        {
+          "inputPerM": 10.0,
+          "cachedInputPerM": 1.0,
+          "outputPerM": 50.0,
+          "longContext": {
+            "thresholdTokens": 272000,
+            "inputPerM": 20.0,
+            "cachedInputPerM": 2.0,
+            "outputPerM": 75.0
+          }
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 45,
+        "latencyMs": 3400
+      },
+      "scores": {
+        "chat": 91,
+        "coding": 93,
+        "code_review": 93,
+        "debugging": 93,
+        "math": 95,
+        "reasoning": 94,
+        "creative_writing": 91,
+        "technical_writing": 92,
+        "summarization": 91,
+        "translation": 92,
+        "data_extraction": 93,
+        "long_context_analysis": 91
+      },
+      "notes": "OpenAI's most capable model for demanding work. Strong at math and reasoning; slow and expensive."
+    },
+    {
+      "id": "gemini-3.5-flash-lite",
+      "provider": "google",
+      "name": "Gemini 3.5 Flash-Lite",
+      "tier": "fast",
+      "mentions": ["flash-lite"],
+      "contextTokens": 1000000,
+      "efforts": [],
+      "pricing": [
+        {
+          "inputPerM": 0.3,
+          "cachedInputPerM": 0.03,
+          "outputPerM": 2.5
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 425,
+        "latencyMs": 2000
+      },
+      "scores": {
+        "chat": 62,
+        "coding": 59,
+        "code_review": 62,
+        "debugging": 62,
+        "math": 62,
+        "reasoning": 59,
+        "creative_writing": 62,
+        "technical_writing": 63,
+        "summarization": 65,
+        "translation": 67,
+        "data_extraction": 64,
+        "long_context_analysis": 68
+      },
+      "notes": "Google's fastest, most cost-effective model. Good for translation, summaries and extraction at scale. Free tier available."
+    },
+    {
+      "id": "gemini-3.1-flash-lite",
+      "provider": "google",
+      "name": "Gemini 3.1 Flash-Lite",
+      "tier": "fast",
+      "contextTokens": 1000000,
+      "efforts": [],
+      "pricing": [
+        {
+          "inputPerM": 0.25,
+          "cachedInputPerM": 0.025,
+          "outputPerM": 1.5
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 350,
+        "latencyMs": 1500
+      },
+      "scores": {
+        "chat": 57,
+        "coding": 54,
+        "code_review": 57,
+        "debugging": 57,
+        "math": 57,
+        "reasoning": 54,
+        "creative_writing": 57,
+        "technical_writing": 58,
+        "summarization": 60,
+        "translation": 62,
+        "data_extraction": 59,
+        "long_context_analysis": 63
+      },
+      "notes": "Older, cheaper Flash-Lite. Free tier available."
+    },
+    {
+      "id": "gemini-3.8-flash",
+      "provider": "google",
+      "name": "Gemini 3.8 Flash",
+      "tier": "balanced",
+      "mentions": ["flash"],
+      "manager": "fast",
+      "contextTokens": 1000000,
+      "efforts": [],
+      "pricing": [
+        {
+          "inputPerM": 0.75,
+          "cachedInputPerM": 0.075,
+          "outputPerM": 3.75
+        },
+        {
+          "from": "2027-01-01",
+          "inputPerM": 1.5,
+          "cachedInputPerM": 0.15,
+          "outputPerM": 7.5
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 139,
+        "latencyMs": 4000
+      },
+      "scores": {
+        "chat": 80,
+        "coding": 80,
+        "code_review": 80,
+        "debugging": 80,
+        "math": 84,
+        "reasoning": 82,
+        "creative_writing": 80,
+        "technical_writing": 81,
+        "summarization": 83,
+        "translation": 85,
+        "data_extraction": 82,
+        "long_context_analysis": 86
+      },
+      "notes": "Google's newest Flash: fast and capable, good with translation and long documents. Free tier available."
+    },
+    {
+      "id": "gemini-3.6-flash",
+      "provider": "google",
+      "name": "Gemini 3.6 Flash",
+      "tier": "balanced",
+      "contextTokens": 1000000,
+      "efforts": [],
+      "pricing": [
+        {
+          "inputPerM": 0.75,
+          "cachedInputPerM": 0.075,
+          "outputPerM": 3.75
+        },
+        {
+          "from": "2027-01-01",
+          "inputPerM": 1.5,
+          "cachedInputPerM": 0.15,
+          "outputPerM": 7.5
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 150,
+        "latencyMs": 4000
+      },
+      "scores": {
+        "chat": 74,
+        "coding": 74,
+        "code_review": 74,
+        "debugging": 74,
+        "math": 78,
+        "reasoning": 76,
+        "creative_writing": 74,
+        "technical_writing": 75,
+        "summarization": 77,
+        "translation": 79,
+        "data_extraction": 76,
+        "long_context_analysis": 80
+      },
+      "notes": "Previous Flash generation, superseded by Gemini 3.8 Flash at the same price. Free tier available."
+    },
+    {
+      "id": "gemini-4-argon",
+      "provider": "google",
+      "name": "Gemini 4 Argon",
+      "tier": "best",
+      "mentions": ["argon"],
+      "manager": "strong",
+      "contextTokens": 1000000,
+      "efforts": [],
+      "pricing": [
+        {
+          "inputPerM": 2.0,
+          "cachedInputPerM": 0.1,
+          "outputPerM": 10.0
+        },
+        {
+          "from": "2026-12-01",
+          "inputPerM": 4.0,
+          "cachedInputPerM": 0.2,
+          "outputPerM": 20.0
+        }
+      ],
+      "speed": {
+        "tokensPerSec": 60,
+        "latencyMs": 15000
+      },
+      "scores": {
+        "chat": 91,
+        "coding": 91,
+        "code_review": 91,
+        "debugging": 91,
+        "math": 95,
+        "reasoning": 93,
+        "creative_writing": 91,
+        "technical_writing": 92,
+        "summarization": 94,
+        "translation": 96,
+        "data_extraction": 93,
+        "long_context_analysis": 97
+      },
+      "notes": "Google's flagship reasoning model: math, science and long documents. Not on the free tier."
+    }
+  ]
+}

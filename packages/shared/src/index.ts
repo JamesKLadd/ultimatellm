@@ -5,3 +5,4 @@ export * from './ipc-channels';
 export * from './orchestration';
 export * from './providers';
 export * from './settings';
+export * from './usage';

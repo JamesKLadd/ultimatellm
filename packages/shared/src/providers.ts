@@ -18,3 +18,14 @@ export const MANAGER_NAMES: Record<ProviderId, string> = {
   openai: 'ChatGPT',
   google: 'Gemini',
 };
+
+/**
+ * `@mentions` that send a prompt straight to a provider (e.g. "@claude explain
+ * this"). Individual models can be mentioned too; see the model registry.
+ */
+export const PROVIDER_MENTIONS: Record<ProviderId, readonly string[]> = {
+  xai: ['grok', 'xai'],
+  anthropic: ['claude', 'anthropic'],
+  openai: ['chatgpt', 'gpt', 'openai'],
+  google: ['gemini', 'google'],
+};
