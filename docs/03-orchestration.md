@@ -55,7 +55,7 @@ Splitting a simple question across models makes answers slower, pricier and less
 
 ## 2. Planning
 
-The manager returns a **structured plan** (JSON validated with Zod, using each provider's structured-output mode). If the output can't be parsed, it is retried once with the error. If planning fails entirely, the prompt falls back to a direct answer from the manager's own model, with a note.
+The manager returns a **structured plan** (JSON validated with Zod, using each provider's structured-output mode). If a model's output can't be parsed, the next manager model is tried. If planning fails entirely, the prompt falls back to a direct answer from the manager's own model, with a note.
 
 ```ts
 type Plan = {
@@ -111,7 +111,7 @@ The planner gets the usable models (price, speed, context, notes) and, for each 
 | Mode | Rule | Effort |
 | --- | --- | --- |
 | Cheapest | The cheapest model whose score for the category clears a quality bar (60; 66 for hard categories such as coding and math). | low |
-| Balanced | Mid-tier models that clear a higher bar (78; 84 for hard categories), best score first. Escalates to the cheapest stronger model only when no mid-tier model clears it. | medium |
+| Balanced | The cheapest mid-tier model that clears a higher bar (78; 84 for hard categories). Escalates to the cheapest stronger model only when no mid-tier model clears it. | medium |
 | Best | The highest score for the category. | high |
 | Fastest | The quickest model that clears the quality bar. | none / lowest |
 
@@ -167,8 +167,8 @@ Only the models **the user can actually use** are put in the planner's prompt. T
 
 - The executor runs the plan as a **DAG**. Each task starts as soon as its dependencies finish; independent tasks run in parallel (up to 4 at a time).
 - Each task runs as a short **tool loop** with the chosen model. It receives the spec, its instructions, the list of files in the workspace and the files its dependencies wrote. Its tools are `list_files`, `read_file` and `write_file` (from 1c also the provider's web search and image generation). It ends with a short report.
-- Each task gets an account from the account pool ([04](04-providers-and-accounts.md)). On a usage-limit or account error, the pool fails over to the next account; when none is left, the task moves to its fallback models.
-- A task that fails after every fallback is marked failed. Tasks that depend on it are skipped; the others still run. A task that already streamed output isn't silently restarted.
+- Each task gets an account from the account pool ([04](04-providers-and-accounts.md)). On a usage-limit or account error, the pool fails over to the next account; when none is left, the task moves to its fallback models. A model that an account reports as unavailable or out of quota is skipped on that account for 15 minutes.
+- A task that fails after every fallback is marked failed. Tasks that depend on it are skipped; the others still run. A workflow task that fails midway is redone from scratch on the next account or model; a direct answer that has already started streaming is not silently restarted.
 - Status events stream to the UI: `queued → running → done | failed | skipped`, with the model, account and any account switch.
 - The user can stop the whole run at any time. Files written so far are kept.
 

@@ -16,7 +16,7 @@ pnpm dev            # run the app with hot reload
 | Command | What it does |
 | --- | --- |
 | `pnpm dev` | Starts the app in development mode. UI changes reload instantly; main-process changes restart the app. |
-| `pnpm dev:mock` | Same, but with offline **mock providers** instead of the real AIs: any key works (except ones starting with `invalid`), nothing is billed. |
+| `pnpm dev:mock` | Same, but with offline **mock providers** instead of the real AIs: any key works (except ones starting with `invalid`), nothing is billed. Ask it to "create a tennis game" to see a workflow. |
 | `pnpm build` | Builds the app into `apps/desktop/out/`. |
 | `pnpm test` | Unit tests (Vitest) for all packages. |
 | `pnpm test:e2e` | End-to-end tests (Playwright) against the built app. Run `pnpm build` first. |
@@ -26,6 +26,8 @@ pnpm dev            # run the app with hot reload
 | `pnpm format` | Fixes formatting with Prettier. |
 
 **Trying it with real AIs:** open *Settings → Accounts* and add an API key. A free [Google AI Studio](https://aistudio.google.com/app/apikey) key is enough to start; Gemini then acts as the manager until you add keys for providers higher in the manager order (Grok, Claude, ChatGPT).
+
+**How prompts are handled:** the manager answers ordinary questions directly with the best model for them. When you ask for something with distinct parts (e.g. *"Create a tennis game"*), it writes a spec and a workflow of tasks for different models, which write files into the chat's workspace (the *Files* panel). Switch the plan mode to **Review** to edit the plan before it runs, or start a message with `@claude`, `@gpt`, `@gemini`, `@grok` (or a model such as `@opus`) to pick the model yourself.
 
 Development builds keep their data in a separate folder (`UltimateLLM-dev` in your OS's app-data directory), so they never touch an installed copy's data.
 
@@ -38,9 +40,10 @@ Development builds keep their data in a separate folder (`UltimateLLM-dev` in yo
 ```
 apps/desktop/        Electron app: main process, preload, React UI, e2e tests, packaging config
 packages/shared/     IPC contract, Zod schemas, settings definitions (shared by main + UI)
-packages/providers/  AI provider adapters (Vercel AI SDK), error classification, model registry, mock provider
+packages/registry/   Model knowledge base: prices, speed, scores per task; routing rules; updates
+packages/providers/  AI provider adapters (Vercel AI SDK), error classification, mock provider
 packages/accounts/   Provider accounts: encrypted keys, validation, priority, health
-packages/core/       The orchestrator: picks the manager and models, streams replies with failover
+packages/core/       The orchestrator: triage and planning, workflows, workspace tools, failover
 packages/db/         Local SQLite database: Drizzle schema, migrations, data access
 packages/ui/         Shared React components (shadcn/ui style) and design tokens
 docs/                Product and design docs
@@ -52,7 +55,7 @@ docs/                Product and design docs
 | --- | --- |
 | [01 – Product spec](docs/01-product-spec.md) | What the app does, from the user's side. All decisions made so far. |
 | [02 – Architecture](docs/02-architecture.md) | Tech stack, process model, data storage, sync, security. |
-| [03 – Orchestration (the manager)](docs/03-orchestration.md) | Planning, routing modes, the model knowledge base, execution, compilation, fallback. |
+| [03 – Orchestration (the manager)](docs/03-orchestration.md) | Direct answers and workflows, routing per output mode, the model knowledge base, the workspace, fallback. |
 | [04 – Providers & accounts](docs/04-providers-and-accounts.md) | Provider adapters, sign-in types, account pools, priority and failover, usage tracking. |
 | [05 – Projects & library](docs/05-projects-and-library.md) | Local and cloud projects, the coding agent, permission modes, artifacts. |
 | [06 – Roadmap](docs/06-roadmap.md) | Phased delivery plan. |

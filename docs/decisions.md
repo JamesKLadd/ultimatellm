@@ -4,6 +4,18 @@ Short records of technical decisions: what was chosen, why, and what would make 
 
 ---
 
+### D-012 · Model registry: data, routing rules and updates (2026-10-15)
+**Decision:**
+- Model knowledge lives in one versioned JSON file, `packages/registry/data/registry.v1.json`, validated with Zod. It is bundled with the app. Apps also download the same file from the repository's `main` branch (on start and twice a day; Settings → Models can turn this off) and use it when its `version` is higher. Entries a given app version can't read are skipped; a file missing a supported provider is rejected.
+- **Routing rules** (`rankModels()`): a quality bar per output mode (higher for hard categories such as coding and math), then Cheapest = cheapest above the bar, Fastest = quickest above the bar, Balanced = cheapest *mid-tier* model above a higher bar (escalating only when none clears it), Best = highest score. The planner sees these recommendations but may deviate; code repairs invalid choices.
+- v1 scores are priors from the Artificial Analysis index (October 2026) and each provider's guidance, plus per-provider strengths. Prices come from the providers' pricing pages on 2026-10-15, including announced price changes (Gemini 4 Argon on 2026-12-01; Gemini Flash on 2027-01-01).
+
+**Why:**
+- New models and price changes shouldn't need an app release.
+- Rules that pass a quality bar before optimizing cost or speed are predictable and explainable, and they spread work across providers instead of sending everything to the highest scorer.
+
+**Revisit when:** the eval suite exists (scores from measurements), or the backend (1f) can host the feed with signing.
+
 ### D-011 · The manager runs workflows that write files (2026-10-15)
 **Decision:** The manager either answers directly (one model, chosen per task and output mode) or plans a **workflow**: a shared spec plus tasks, each assigned to the best usable model for it. Workflow tasks write their results as **files** in a per-chat workspace, using tools (`list_files`, `read_file`, `write_file`). The manager's wrap-up message presents the files instead of stitching text answers together. Milestones change accordingly: 1b workflows, 1c tools (web search, image generation), 1d integrate and preview; the earlier 1c–1e become 1e–1g.
 **Why:**

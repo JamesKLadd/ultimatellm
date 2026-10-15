@@ -17,9 +17,10 @@ Electron desktop app (Windows/macOS first) that routes prompts across AI provide
 - `apps/desktop/src/preload`: exposes `window.ull` (sandboxed; imports only `@ultimatellm/shared/ipc-channels` at runtime)
 - `apps/desktop/src/renderer`: React UI (Zustand for UI state, TanStack Query for data from main)
 - `packages/shared`: IPC contract (`ipc.ts`), settings definitions, orchestration types
-- `packages/providers`: AI SDK adapters, `streamChat()`, error classification, model registry, mock provider
+- `packages/registry`: the model knowledge base (`data/registry.v1.json`), pricing/cost, routing rules (`rankModels()`), registry downloads
+- `packages/providers`: AI SDK adapters, `streamChat()` (with tools), `generateStructured()`, error classification, mock provider
 - `packages/accounts`: `AccountService` (encrypted keys via an injected `SecretBox`, health, priority)
-- `packages/core`: `ChatEngine` (manager selection, model choice per output mode, failover, persistence)
+- `packages/core`: `ChatEngine`: triage and planning (`planner.ts`), workflows (`graph.ts`, workspace tools in `workspace.ts`), failover (`failover.ts`), persistence. See `docs/03-orchestration.md`
 - `packages/db`: `node:sqlite` + Drizzle 1.0 RC; schema, migrations, stores
 - `packages/ui`: shadcn-style components + design tokens (`src/styles/globals.css`)
 
@@ -46,6 +47,7 @@ Electron desktop app (Windows/macOS first) that routes prompts across AI provide
 - Playwright's Electron launcher disables Chromium's sandbox and forces a light color scheme unless told otherwise. The e2e helper passes `chromiumSandbox` and `colorScheme: null`.
 - Code run directly inside `page.evaluate` is exempt from the page's `unsafe-eval` CSP check. Test CSP behavior on a later task (e.g. inside `setTimeout`).
 - Chromium refuses to start sandboxed as root; pass `--no-sandbox` only in that case (the app then skips `app.enableSandbox()`).
-- End-to-end tests that chat use `launchApp({ mock: true })` (adds `--mock-providers`; ignored in packaged builds). Mock behavior is driven by the API key prefix (`invalid`, `ratelimited`, `revoked`) and `[slow]` in a prompt.
-- Model IDs live in `packages/providers/src/registry.ts`; re-check them against the providers' model docs when updating.
+- End-to-end tests that chat use `launchApp({ mock: true })` (adds `--mock-providers`; ignored in packaged builds). Mock behavior is driven by the API key prefix (`invalid`, `ratelimited`, `revoked`) and markers in the prompt: `[slow]` (slow streaming), `[workflow]` or "build/create/make … game/app/site" (a three-task workflow), `[pick:<model-id>]` (direct answer by that model), `[badplan]` (unparseable plan). The mock planner uses the `<recommended>` models from the planner prompt, so routing rules show up in tests.
+- **Model data** lives in `packages/registry/data/registry.v1.json`. Installed apps download that file from `main`, so: bump `version` (YYYYMMDDNN) with every change, keep `pnpm check` green (a test validates the file), and re-check IDs and prices against the providers' docs.
+- `streamText` ends a stopped stream with an `abort` part instead of throwing; `streamChat()` turns it into an `aborted` `ProviderError`. Keep that when touching streaming, or stopped replies get saved as complete.
 - `--smoke-test` (e.g. `pnpm exec electron . --smoke-test` in `apps/desktop` after a build, or the packaged binary with that flag) starts the app with a throwaway data folder, checks the UI rendered, and exits with code 0 or 1.

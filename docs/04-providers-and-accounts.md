@@ -50,9 +50,15 @@ stateDiagram-v2
   auth_invalid --> active: "Check again" succeeds
 ```
 
-Implemented in `packages/accounts` (milestone 1a). Spend caps and a user "disable" toggle come in milestone 1c.
+Implemented in `packages/accounts` (milestone 1a); failover across accounts and models is in `packages/core` (`withFailover`). Spend caps and a user "disable" toggle come in milestone 1e.
 
-**Choosing an account for a request:** take the provider's accounts in the user's priority order and pick the first that is `active`, under its spend cap, and has room under its concurrency limit. If the chosen one fails with `rate_limited`, `quota_exhausted`, `auth_invalid` or exhausted `server_error` retries, mark it, pick the next, and resend. The user sees "switched to <account label>" on that subtask's status bar.
+**Choosing an account for a request:** take the provider's accounts in the user's priority order and pick the first that is `active` and can use the model (per the model list the provider reported when the key was checked). If it fails:
+- `rate_limited` or `auth_invalid`: the account is marked (see above) and the next account is tried.
+- `quota_exhausted` or `model_unavailable`: often specific to one model (free tiers have per-model quotas), so that model is skipped on that account for 15 minutes and the next account is tried. An account that runs out on two or more models in one request is paused.
+- `server_error` or network trouble: the next account is tried.
+- `bad_request`, unreadable output or anything unknown: the next model is tried.
+
+The user sees "switched after an error" on that step's status bar. Spend caps and per-account concurrency limits come with milestone 1e.
 
 **Parallel load:** for parallel subtasks, the pool still fills accounts in priority order. It moves to account #2 only when #1 is at its concurrency limit. This honors "use this one first".
 
