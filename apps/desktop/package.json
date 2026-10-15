@@ -30,6 +30,7 @@
     "@ultimatellm/core": "workspace:*",
     "@ultimatellm/db": "workspace:*",
     "@ultimatellm/providers": "workspace:*",
+    "@ultimatellm/registry": "workspace:*",
     "@ultimatellm/shared": "workspace:*",
     "@ultimatellm/ui": "workspace:*",
     "@vitejs/plugin-react": "^5.2.0",

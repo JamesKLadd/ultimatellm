@@ -1,5 +1,16 @@
-import type { AccountStatus, MessageStatus, ProviderId } from '@ultimatellm/shared';
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import type {
+  AccountStatus,
+  Effort,
+  MessageStatus,
+  OutputMode,
+  PlanKind,
+  PlanMode,
+  ProviderId,
+  StepKind,
+  StepStatus,
+  TaskCategory,
+} from '@ultimatellm/shared';
+import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 const timestamp = (name: string) => integer(name, { mode: 'timestamp_ms' });
 
@@ -78,10 +89,105 @@ export const messages = sqliteTable(
     /** Which account answered. Not a foreign key: history survives removing the account. */
     accountId: text('account_id'),
     accountLabel: text('account_label'),
+    /** Totals for the whole reply (planning, tasks and wrap-up). */
     inputTokens: integer('input_tokens'),
+    cachedInputTokens: integer('cached_input_tokens'),
     outputTokens: integer('output_tokens'),
     reasoningTokens: integer('reasoning_tokens'),
+    /** US dollars at list prices. */
+    costUsd: real('cost_usd'),
+    outputMode: text('output_mode').$type<OutputMode>(),
     createdAt: timestamp('created_at').notNull(),
   },
   (table) => [index('messages_chat_created').on(table.chatId, table.createdAt)],
+);
+
+/** How the manager handled an assistant message: direct answer or workflow. */
+export const plans = sqliteTable('plans', {
+  messageId: text('message_id')
+    .primaryKey()
+    .references(() => messages.id, { onDelete: 'cascade' }),
+  kind: text('kind').$type<PlanKind>().notNull(),
+  summary: text('summary').notNull(),
+  /** The shared contract every task received (Markdown). */
+  spec: text('spec').notNull(),
+  /** Who planned; null when planning was skipped. */
+  managerProvider: text('manager_provider').$type<ProviderId>(),
+  managerModel: text('manager_model'),
+  /** The @mention that chose the model, if any. */
+  pinned: text('pinned'),
+  planMode: text('plan_mode').$type<PlanMode>().notNull(),
+  estimatedCostUsd: real('estimated_cost_usd'),
+  estimatedSeconds: real('estimated_seconds'),
+  createdAt: timestamp('created_at').notNull(),
+});
+
+/** Planning, each task and the wrap-up of an assistant message. */
+export const planSteps = sqliteTable(
+  'plan_steps',
+  {
+    id: text('id').primaryKey(),
+    messageId: text('message_id')
+      .notNull()
+      .references(() => messages.id, { onDelete: 'cascade' }),
+    /** "plan", "wrapup", or a task ID. Unique within the message. */
+    key: text('key').notNull(),
+    kind: text('kind').$type<StepKind>().notNull(),
+    position: integer('position').notNull(),
+    title: text('title').notNull(),
+    instructions: text('instructions').notNull(),
+    category: text('category').$type<TaskCategory>(),
+    dependsOn: text('depends_on', { mode: 'json' })
+      .$type<string[]>()
+      .notNull()
+      .$defaultFn(() => []),
+    outputs: text('outputs', { mode: 'json' })
+      .$type<string[]>()
+      .notNull()
+      .$defaultFn(() => []),
+    rationale: text('rationale').notNull(),
+    provider: text('provider').$type<ProviderId>(),
+    model: text('model'),
+    effort: text('effort').$type<Effort>(),
+    accountId: text('account_id'),
+    accountLabel: text('account_label'),
+    status: text('status').$type<StepStatus>().notNull(),
+    /** The model's text: the answer for direct answers, otherwise its report. */
+    report: text('report').notNull(),
+    error: text('error'),
+    inputTokens: integer('input_tokens'),
+    cachedInputTokens: integer('cached_input_tokens'),
+    outputTokens: integer('output_tokens'),
+    reasoningTokens: integer('reasoning_tokens'),
+    costUsd: real('cost_usd'),
+    startedAt: timestamp('started_at'),
+    finishedAt: timestamp('finished_at'),
+  },
+  (table) => [uniqueIndex('plan_steps_message_key').on(table.messageId, table.key)],
+);
+
+/**
+ * Files in a chat's workspace. Every write adds a row, so older versions stay;
+ * the current file is the newest row for its path.
+ */
+export const workspaceFiles = sqliteTable(
+  'workspace_files',
+  {
+    id: text('id').primaryKey(),
+    chatId: text('chat_id')
+      .notNull()
+      .references(() => chats.id, { onDelete: 'cascade' }),
+    /** The reply that wrote this version. */
+    messageId: text('message_id')
+      .notNull()
+      .references(() => messages.id, { onDelete: 'cascade' }),
+    stepKey: text('step_key').notNull(),
+    /** Relative path with forward slashes, e.g. "src/game.js". */
+    path: text('path').notNull(),
+    content: text('content').notNull(),
+    mime: text('mime').notNull(),
+    size: integer('size').notNull(),
+    createdAt: timestamp('created_at').notNull(),
+  },
+  (table) => [index('workspace_files_chat_path').on(table.chatId, table.path)],
 );

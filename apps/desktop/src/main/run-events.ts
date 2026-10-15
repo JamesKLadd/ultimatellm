@@ -10,23 +10,22 @@ const FLUSH_MS = 30;
 export function batchTextEvents(
   send: (event: ChatRunEvent) => void,
 ): (event: ChatRunEvent) => void {
-  const pending = new Map<string, { chatId: string; text: string }>();
+  const pending = new Map<string, Extract<ChatRunEvent, { type: 'text' }>>();
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   const flush = () => {
     clearTimeout(timer);
     timer = undefined;
-    for (const [runId, { chatId, text }] of pending) {
-      send({ type: 'text', runId, chatId, delta: text });
-    }
+    for (const event of pending.values()) send(event);
     pending.clear();
   };
 
   return (event) => {
     if (event.type === 'text') {
-      const buffered = pending.get(event.runId);
-      if (buffered) buffered.text += event.delta;
-      else pending.set(event.runId, { chatId: event.chatId, text: event.delta });
+      const key = `${event.runId}\n${event.step}`;
+      const buffered = pending.get(key);
+      if (buffered) buffered.delta += event.delta;
+      else pending.set(key, { ...event });
       timer ??= setTimeout(flush, FLUSH_MS);
       return;
     }

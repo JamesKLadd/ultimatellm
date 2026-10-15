@@ -47,11 +47,14 @@ export function parseRegistry(json: unknown): ParsedRegistry {
   return { registry, skipped };
 }
 
-/** Downloads and validates the published registry. Throws if it can't. */
+/**
+ * Downloads and validates the published registry. Also returns the file's
+ * text, to cache exactly what was validated. Throws if it can't.
+ */
 export async function fetchRegistry(
   fetchFn: typeof fetch,
   signal?: AbortSignal,
-): Promise<ParsedRegistry> {
+): Promise<ParsedRegistry & { text: string }> {
   const response = await fetchFn(REGISTRY_UPDATE_URL, {
     signal: signal ?? null,
     headers: { Accept: 'application/json' },
@@ -59,5 +62,5 @@ export async function fetchRegistry(
   if (!response.ok) throw new Error(`Model registry download failed (HTTP ${response.status})`);
   const text = await response.text();
   if (text.length > MAX_REGISTRY_BYTES) throw new Error('Model registry download is too large');
-  return parseRegistry(JSON.parse(text));
+  return { ...parseRegistry(JSON.parse(text)), text };
 }

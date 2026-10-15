@@ -59,7 +59,18 @@ const api: UllApi = {
     send: (input) => invoke(InvokeChannel.chatsSend, input),
     stop: (runId) => invoke(InvokeChannel.chatsStop, { runId }),
     remove: (id) => invoke(InvokeChannel.chatsRemove, { id }),
+    approvePlan: (input) => invoke(InvokeChannel.chatsApprovePlan, input),
     onRunEvent: (listener) => subscribe(EventChannel.chatRun, listener),
+  },
+  workspace: {
+    list: (chatId) => invoke(InvokeChannel.workspaceList, { id: chatId }),
+    read: (chatId, path) => invoke(InvokeChannel.workspaceRead, { chatId, path }),
+    export: (chatId) => invoke(InvokeChannel.workspaceExport, { id: chatId }),
+  },
+  models: {
+    info: () => invoke(InvokeChannel.modelsInfo),
+    checkForUpdate: () => invoke(InvokeChannel.modelsCheckForUpdate),
+    setAutoUpdate: (enabled) => invoke(InvokeChannel.modelsSetAutoUpdate, enabled),
   },
 };
 

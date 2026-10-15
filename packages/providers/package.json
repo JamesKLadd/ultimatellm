@@ -18,6 +18,7 @@
     "@ai-sdk/openai": "4.0.87",
     "@ai-sdk/provider": "4.0.24",
     "@ai-sdk/xai": "5.0.18",
+    "@ultimatellm/registry": "workspace:*",
     "@ultimatellm/shared": "workspace:*",
     "ai": "7.0.131"
   },

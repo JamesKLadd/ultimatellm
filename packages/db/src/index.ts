@@ -12,6 +12,10 @@ export {
   type MessagePatch,
   type MessageRow,
   type NewMessage,
+  type NewPlan,
+  type NewStep,
+  type PlanRow,
+  type StepRow,
 } from './chats-store';
 export {
   openDatabase,
@@ -21,3 +25,10 @@ export {
 } from './client';
 export * as schema from './schema';
 export { createSettingsStore, type SettingsStore } from './settings-store';
+export {
+  createWorkspaceStore,
+  type NewWorkspaceFile,
+  type WorkspaceEntry,
+  type WorkspaceFileRow,
+  type WorkspaceStore,
+} from './workspace-store';

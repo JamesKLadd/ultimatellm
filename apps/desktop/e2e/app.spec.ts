@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -239,5 +239,91 @@ test('chats through the manager, fails over, and keeps everything after a restar
     await expect(page.getByTestId('assistant-message')).toHaveCount(2);
   } finally {
     await second.app.close();
+  }
+});
+
+/** Adds a Claude and a Gemini key from the new-chat screen. */
+async function addClaudeAndGemini(page: Page) {
+  await page.getByRole('button', { name: 'Add an account' }).click();
+  await addKey(page, 'Anthropic', 'sk-ant-mock-key', 'Claude key');
+  await addKey(page, 'Google', 'AIza-mock-key', 'Gemini key');
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await expect(dialog.getByTestId('account-row')).toHaveCount(2);
+  await page.keyboard.press('Escape');
+}
+
+test('runs a workflow across models, with files, sources and export', async () => {
+  const { app, page } = await launchApp({ mock: true });
+  const exportDir = mkdtempSync(join(tmpdir(), 'ultimatellm-export-'));
+  try {
+    await addClaudeAndGemini(page);
+    await page.getByLabel('Message').fill('Create a tennis game');
+    await page.keyboard.press('Enter');
+
+    const reply = page.getByTestId('assistant-message');
+    await expect(reply).toContainText('Mock wrap-up', { timeout: 20_000 });
+    // One status bar per task, each on the model that suits it.
+    const rows = reply.getByTestId('step-row');
+    await expect(rows).toHaveCount(3);
+    await expect(rows.nth(0)).toContainText('Research player stats');
+    await expect(rows.nth(0)).toContainText('Gemini 3.8 Flash');
+    await expect(rows.nth(1)).toContainText('Claude Sonnet 5.5');
+    await expect(reply.locator('[data-testid="step-row"][data-status="done"]')).toHaveCount(3);
+
+    // The files panel opened by itself.
+    const files = page.getByTestId('files-panel');
+    await expect(files.getByTestId('file-row')).toHaveCount(4);
+    await files.getByTestId('file-row').filter({ hasText: 'players.json' }).click();
+    await expect(page.getByTestId('file-content')).toContainText('Gemini 3.8 Flash');
+    await page.keyboard.press('Escape');
+
+    // Sources: planning, three tasks and the wrap-up, with the cost.
+    await reply.getByRole('button', { name: 'Sources' }).click();
+    await expect(reply.getByTestId('source-step')).toHaveCount(5);
+    await expect(reply.getByTestId('message-cost')).toBeVisible();
+
+    // Export into a folder (the folder picker is stubbed).
+    await app.evaluate(({ dialog }, folder) => {
+      dialog.showOpenDialog = () => Promise.resolve({ canceled: false, filePaths: [folder] });
+    }, exportDir);
+    await files.getByRole('button', { name: 'Export' }).click();
+    await expect(files.getByRole('status')).toContainText('Exported 4 files');
+    expect(existsSync(join(exportDir, 'Create a tennis game', 'src', 'game.js'))).toBe(true);
+  } finally {
+    await app.close();
+    rmSync(exportDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+  }
+});
+
+test('lets the user review and edit a plan before it runs', async () => {
+  const { app, page } = await launchApp({ mock: true });
+  try {
+    await addClaudeAndGemini(page);
+    await page.getByRole('radio', { name: 'Review' }).click();
+    await page.getByLabel('Message').fill('Build a todo app');
+    await page.keyboard.press('Enter');
+
+    const review = page.getByTestId('plan-review');
+    await expect(review.getByTestId('plan-task')).toHaveCount(3);
+    await review.getByLabel('Model for Research player stats').selectOption('claude-haiku-5-5');
+    await review.getByRole('button', { name: 'Delete Write the README' }).click();
+    await expect(review.getByTestId('plan-task')).toHaveCount(2);
+    await review.getByRole('button', { name: 'Run' }).click();
+
+    const reply = page.getByTestId('assistant-message');
+    await expect(reply).toContainText('Mock wrap-up', { timeout: 20_000 });
+    await expect(reply.getByTestId('step-row')).toHaveCount(2);
+    await expect(reply.getByTestId('step-row').first()).toContainText('Claude Haiku 5.5');
+
+    // An @mention picks the model; Review mode still shows the plan first.
+    await page.getByLabel('Message').fill('@gemini what is 2 + 2?');
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('plan-review')).toContainText('Review the answer plan');
+    await page.getByTestId('plan-review').getByRole('button', { name: 'Run' }).click();
+    const answer = page.getByTestId('assistant-message').last();
+    await expect(answer).toContainText('You asked: “what is 2 + 2?”');
+    await expect(answer).toContainText('Gemini 3.8 Flash');
+  } finally {
+    await app.close();
   }
 });

@@ -20,6 +20,13 @@ export const InvokeChannel = {
   chatsSend: 'chats:send',
   chatsStop: 'chats:stop',
   chatsRemove: 'chats:remove',
+  chatsApprovePlan: 'chats:approve-plan',
+  workspaceList: 'workspace:list',
+  workspaceRead: 'workspace:read',
+  workspaceExport: 'workspace:export',
+  modelsInfo: 'models:info',
+  modelsCheckForUpdate: 'models:check-for-update',
+  modelsSetAutoUpdate: 'models:set-auto-update',
 } as const;
 
 /** Main → renderer events (`webContents.send`). */

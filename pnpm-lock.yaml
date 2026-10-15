@@ -74,6 +74,9 @@ importers:
       '@ultimatellm/providers':
         specifier: workspace:*
         version: link:../../packages/providers
+      '@ultimatellm/registry':
+        specifier: workspace:*
+        version: link:../../packages/registry
       '@ultimatellm/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -159,9 +162,18 @@ importers:
       '@ultimatellm/providers':
         specifier: workspace:*
         version: link:../providers
+      '@ultimatellm/registry':
+        specifier: workspace:*
+        version: link:../registry
       '@ultimatellm/shared':
         specifier: workspace:*
         version: link:../shared
+      ai:
+        specifier: 7.0.131
+        version: 7.0.131(zod@4.6.5)
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
     devDependencies:
       '@types/node':
         specifier: ^24.19.1
@@ -212,6 +224,9 @@ importers:
       '@ai-sdk/xai':
         specifier: 5.0.18
         version: 5.0.18(zod@4.6.5)
+      '@ultimatellm/registry':
+        specifier: workspace:*
+        version: link:../registry
       '@ultimatellm/shared':
         specifier: workspace:*
         version: link:../shared

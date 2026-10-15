@@ -48,15 +48,6 @@ export const HARD_TASK_CATEGORIES: ReadonlySet<TaskCategory> = new Set([
 ]);
 
 /**
- * How subtask results become the final answer (R12: assemble without rewriting).
- * - `concatenate`: results in order with headings; no model call
- * - `sectioned`: the manager adds a short intro and section headings; results stay verbatim
- * - `stitched`: the manager merges the results into one answer (shown as "merged by …")
- */
-export const CompileStrategy = z.enum(['concatenate', 'sectioned', 'stitched']);
-export type CompileStrategy = z.infer<typeof CompileStrategy>;
-
-/**
  * Default order for choosing the manager: Grok bot (xAI) first, then Claude,
  * ChatGPT and Gemini. No provider is required; the first one the user has a
  * usable account for manages, and the rest are fallbacks in the same order.

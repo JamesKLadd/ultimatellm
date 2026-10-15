@@ -1,10 +1,15 @@
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { app, BrowserWindow, dialog, Menu, nativeTheme, session } from 'electron';
+import { app, BrowserWindow, dialog, Menu, nativeTheme, net, session } from 'electron';
 import { AccountService } from '@ultimatellm/accounts';
 import { ChatEngine } from '@ultimatellm/core';
-import { createAccountStore, createChatStore, createSettingsStore } from '@ultimatellm/db';
+import {
+  createAccountStore,
+  createChatStore,
+  createSettingsStore,
+  createWorkspaceStore,
+} from '@ultimatellm/db';
 import { createProviderAdapters } from '@ultimatellm/providers';
 import {
   EventChannel,
@@ -14,6 +19,8 @@ import {
 } from '@ultimatellm/shared';
 import { openAppDatabase } from './database';
 import { registerIpcHandlers } from './ipc';
+import { RegistryHolder } from './model-registry';
+import { ModelsService } from './models-service';
 import { buildAppMenu } from './menu';
 import { registerAppScheme, serveAppProtocol } from './protocol';
 import { batchTextEvents } from './run-events';
@@ -101,6 +108,7 @@ function start(): void {
   };
   const changed = (scope: DataScope) => sendToWindow(EventChannel.dataChanged, scope);
 
+  const registry = new RegistryHolder(join(app.getPath('userData'), 'model-registry.json'));
   const adapters = createProviderAdapters({ mock: mockProviders });
   const accounts = new AccountService({
     store: createAccountStore(database.db),
@@ -111,16 +119,25 @@ function start(): void {
     accounts,
     adapters,
     chats: createChatStore(database.db),
+    workspace: createWorkspaceStore(database.db),
+    registry: () => registry.current,
     managerOrder: () => settings.get('orchestration.managerPriority'),
     emit: batchTextEvents((event) => sendToWindow(EventChannel.chatRun, event)),
     changed,
   });
+  engine.recoverInterrupted();
+  const models = new ModelsService(registry, settings, engine, changed, (input, init) =>
+    net.fetch(input instanceof URL ? input.href : input, init),
+  );
+  // Tests and mock mode never go online.
+  if (!mockProviders && !isSmokeTest) models.start();
 
   registerIpcHandlers({
     trustedOrigins,
     settings,
     accounts,
     engine,
+    models,
     mockProviders,
     applyTheme,
     changed,
@@ -131,6 +148,7 @@ function start(): void {
   app.on('will-quit', (event) => {
     if (closing) return;
     closing = true;
+    models.stop();
     if (!engine.hasRuns()) return database.close();
     event.preventDefault();
     engine.stopAll();

@@ -13,6 +13,8 @@ export const settingDefinitions = {
   'appearance.theme': { schema: ThemePreference, default: 'system' },
   /** Which provider manages prompts; see `rankManagers()`. */
   'orchestration.managerPriority': { schema: ManagerPriority, default: DEFAULT_MANAGER_PRIORITY },
+  /** Download newer model information (prices, new models) from the project's repository. */
+  'models.autoUpdate': { schema: z.boolean(), default: true },
 } as const satisfies Record<string, { schema: z.ZodType; default: unknown }>;
 
 export type SettingKey = keyof typeof settingDefinitions;

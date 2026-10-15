@@ -1,4 +1,4 @@
-import { app, ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron';
 import type { AccountService } from '@ultimatellm/accounts';
 import type { ChatEngine } from '@ultimatellm/core';
 import type { SettingsStore } from '@ultimatellm/db';
@@ -14,6 +14,8 @@ import {
   type ManagerStatus,
   type ThemePreference,
 } from '@ultimatellm/shared';
+import { exportFiles } from './export-files';
+import type { ModelsService } from './models-service';
 import { isTrustedOrigin } from './security/policy';
 
 type Handler<C extends InvokeChannelName> = (
@@ -44,6 +46,7 @@ export interface IpcDependencies {
   settings: SettingsStore;
   accounts: AccountService;
   engine: ChatEngine;
+  models: ModelsService;
   mockProviders: boolean;
   applyTheme: (theme: ThemePreference) => void;
   /** Tells the UI that data changed so it can refresh. */
@@ -51,7 +54,7 @@ export interface IpcDependencies {
 }
 
 export function registerIpcHandlers(deps: IpcDependencies) {
-  const { settings, accounts, engine, changed } = deps;
+  const { settings, accounts, engine, models, changed } = deps;
   const handle = createHandle(deps.trustedOrigins);
 
   handle(InvokeChannel.appGetInfo, () => ({
@@ -123,6 +126,39 @@ export function registerIpcHandlers(deps: IpcDependencies) {
   });
   handle(InvokeChannel.chatsRemove, ({ id }) => {
     engine.removeChat(id);
+    return undefined;
+  });
+  handle(InvokeChannel.chatsApprovePlan, (input) => {
+    engine.approvePlan(input);
+    return undefined;
+  });
+
+  // Workspace
+  handle(InvokeChannel.workspaceList, ({ id }) => engine.listFiles(id));
+  handle(InvokeChannel.workspaceRead, ({ chatId, path }) => engine.readFile(chatId, path));
+  handle(InvokeChannel.workspaceExport, async ({ id }, event) => {
+    const files = engine.filesForExport(id);
+    if (files.length === 0) return null;
+    const window = BrowserWindow.fromWebContents(event.sender);
+    const options = {
+      title: 'Export files',
+      buttonLabel: 'Export here',
+      properties: ['openDirectory', 'createDirectory'] as ('openDirectory' | 'createDirectory')[],
+    };
+    const choice = window
+      ? await dialog.showOpenDialog(window, options)
+      : await dialog.showOpenDialog(options);
+    const parent = choice.filePaths[0];
+    if (choice.canceled || !parent) return null;
+    const title = engine.getChat(id)?.chat.title ?? 'UltimateLLM files';
+    return { folder: exportFiles(parent, title, files), count: files.length };
+  });
+
+  // Models
+  handle(InvokeChannel.modelsInfo, () => models.info());
+  handle(InvokeChannel.modelsCheckForUpdate, () => models.checkForUpdate());
+  handle(InvokeChannel.modelsSetAutoUpdate, (enabled) => {
+    models.setAutoUpdate(enabled);
     return undefined;
   });
 }

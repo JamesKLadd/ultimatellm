@@ -8,15 +8,27 @@ import {
   SegmentedControl,
   type SegmentedControlOption,
 } from '@ultimatellm/ui';
-import { Crown, Info, KeyRound, Monitor, Moon, Palette, Sun, type LucideIcon } from 'lucide-react';
+import {
+  Boxes,
+  Crown,
+  Info,
+  KeyRound,
+  Monitor,
+  Moon,
+  Palette,
+  Sun,
+  type LucideIcon,
+} from 'lucide-react';
 import { useAppInfo, useSetTheme, useTheme } from '../../lib/queries';
 import { useUiStore, type SettingsTab } from '../../state/ui-store';
 import { AccountsSettings } from './accounts-settings';
 import { ManagerSettings } from './manager-settings';
+import { ModelsSettings } from './models-settings';
 
 const TABS: readonly { id: SettingsTab; label: string; icon: LucideIcon }[] = [
   { id: 'accounts', label: 'Accounts', icon: KeyRound },
   { id: 'manager', label: 'Manager', icon: Crown },
+  { id: 'models', label: 'Models', icon: Boxes },
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'about', label: 'About', icon: Info },
 ];
@@ -36,7 +48,7 @@ export function SettingsDialog() {
         >
           <DialogTitle className="px-2 pt-1 pb-3 text-base">Settings</DialogTitle>
           <DialogDescription className="sr-only">
-            Accounts, manager order, appearance and app information.
+            Accounts, manager order, models, appearance and app information.
           </DialogDescription>
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
@@ -56,6 +68,7 @@ export function SettingsDialog() {
         <div className="min-w-0 flex-1 overflow-y-auto p-6 pt-12">
           {tab === 'accounts' && <AccountsSettings />}
           {tab === 'manager' && <ManagerSettings />}
+          {tab === 'models' && <ModelsSettings />}
           {tab === 'appearance' && <AppearanceSettings />}
           {tab === 'about' && <AboutSettings />}
         </div>

@@ -1,4 +1,4 @@
-export { BUNDLED_REGISTRY } from './bundled';
+export { BUNDLED_REGISTRY, BUNDLED_REGISTRY_FILE } from './bundled';
 export { blendedPrice, costUsd, pricesAt } from './pricing';
 export { categoryScore, QUALITY_BARS, qualityBar, rankModels, typicalSeconds } from './ranking';
 export { ModelRegistry, type ModelRegistryData } from './registry';

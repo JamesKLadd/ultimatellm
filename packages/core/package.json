@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "license": "Apache-2.0",
-  "description": "The orchestrator: picks the manager and models, runs replies with failover, saves chats.",
+  "description": "The orchestrator: triage and planning, workflows with workspace files, failover, saving chats.",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
@@ -16,7 +16,10 @@
     "@ultimatellm/accounts": "workspace:*",
     "@ultimatellm/db": "workspace:*",
     "@ultimatellm/providers": "workspace:*",
-    "@ultimatellm/shared": "workspace:*"
+    "@ultimatellm/registry": "workspace:*",
+    "@ultimatellm/shared": "workspace:*",
+    "ai": "7.0.131",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/node": "^24.19.1",

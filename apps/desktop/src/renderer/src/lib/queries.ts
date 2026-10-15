@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   AddApiKeyInput,
+  ApprovePlanInput,
   ProviderId,
   SendMessageInput,
   ThemePreference,
@@ -14,6 +15,10 @@ export const queryKeys = {
   chats: ['chats'],
   chat: (id: string) => ['chat', id] as const,
   allChats: ['chat'],
+  files: (chatId: string) => ['files', chatId] as const,
+  file: (chatId: string, path: string) => ['files', chatId, path] as const,
+  allFiles: ['files'],
+  models: ['models'],
 } as const;
 
 export function useAppInfo() {
@@ -101,4 +106,51 @@ export function useSendMessage() {
 
 export function useRemoveChat() {
   return useMutation({ mutationFn: (id: string) => window.ull.chats.remove(id) });
+}
+
+export function useApprovePlan() {
+  return useMutation({
+    mutationFn: (input: ApprovePlanInput) => window.ull.chats.approvePlan(input),
+  });
+}
+
+// --- Workspace ---------------------------------------------------------------------
+
+export function useWorkspaceFiles(chatId: string) {
+  return useQuery({
+    queryKey: queryKeys.files(chatId),
+    queryFn: () => window.ull.workspace.list(chatId),
+  });
+}
+
+export function useWorkspaceFile(chatId: string, path: string | null) {
+  return useQuery({
+    queryKey: queryKeys.file(chatId, path ?? ''),
+    queryFn: () => window.ull.workspace.read(chatId, path!),
+    enabled: path !== null,
+  });
+}
+
+export function useExportFiles() {
+  return useMutation({ mutationFn: (chatId: string) => window.ull.workspace.export(chatId) });
+}
+
+// --- Models ------------------------------------------------------------------------
+
+export function useModelsInfo() {
+  return useQuery({ queryKey: queryKeys.models, queryFn: () => window.ull.models.info() });
+}
+
+export function useCheckModelsUpdate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => window.ull.models.checkForUpdate(),
+    onSuccess: (info) => queryClient.setQueryData(queryKeys.models, info),
+  });
+}
+
+export function useSetModelsAutoUpdate() {
+  return useMutation({
+    mutationFn: (enabled: boolean) => window.ull.models.setAutoUpdate(enabled),
+  });
 }

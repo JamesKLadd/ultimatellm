@@ -62,7 +62,7 @@ const PLAN_MODES: readonly SegmentedControlOption<PlanMode>[] = [
         <Play /> Auto
       </>
     ),
-    description: 'The manager starts working as soon as it has a plan',
+    description: 'The plan runs as soon as the manager has made it',
   },
   {
     value: 'review',
@@ -71,8 +71,7 @@ const PLAN_MODES: readonly SegmentedControlOption<PlanMode>[] = [
         <ListChecks /> Review
       </>
     ),
-    description:
-      'Review and edit the manager’s plan before it runs (plans arrive with multi-model planning)',
+    description: 'Review and edit the manager’s plan (models, tasks, spec) before it runs',
   },
 ];
 
@@ -135,7 +134,7 @@ export function Composer({ chatId, autoFocus = false }: ComposerProps) {
         placeholder={
           noManager
             ? 'No AI account is available. Add one in Settings → Accounts.'
-            : 'Ask anything. The manager will pick the best models for it.'
+            : 'Ask anything, or pick a model with @claude, @gpt, @gemini or @grok'
         }
         value={draft}
         onChange={(event) => setDraft(event.target.value)}

@@ -25,25 +25,11 @@ export function createProviderAdapters(options: ProviderAdaptersOptions = {}): P
 
 export { classifyError, classifyHttpError, ProviderError, type ErrorKind } from './errors';
 export {
-  findModel,
-  MODELS,
-  modelCandidates,
-  modelName,
-  supportedEffort,
-  type ModelInfo,
-} from './registry';
-export {
   streamChat,
+  toTokenUsage,
   type ChatStreamEvent,
   type ChatTurn,
   type StreamChatOptions,
-  type TokenUsage,
 } from './stream';
-export type {
-  ApiKeyCredential,
-  Credential,
-  Effort,
-  ModelTier,
-  ProviderAdapter,
-  ValidationResult,
-} from './types';
+export { generateStructured, type GenerateStructuredOptions } from './structured';
+export type { ApiKeyCredential, Credential, ProviderAdapter, ValidationResult } from './types';

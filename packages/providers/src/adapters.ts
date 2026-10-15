@@ -6,8 +6,8 @@ import type { ProviderId } from '@ultimatellm/shared';
 import type { SharedV4ProviderOptions as ProviderOptions } from '@ai-sdk/provider';
 import type { LanguageModel } from 'ai';
 import { classifyError, classifyHttpError } from './errors';
-import { supportedEffort } from './registry';
-import type { Credential, Effort, ProviderAdapter, ValidationResult } from './types';
+import type { Effort } from '@ultimatellm/shared';
+import type { Credential, ProviderAdapter, ValidationResult } from './types';
 
 type FetchFn = typeof fetch;
 
@@ -74,19 +74,13 @@ function languageModelFor(provider: ProviderId, modelId: string, apiKey: string)
   }
 }
 
-function effortOptionsFor(
-  provider: ProviderId,
-  modelId: string,
-  effort: Effort,
-): ProviderOptions | undefined {
-  const level = supportedEffort(modelId, effort);
-  if (!level) return undefined;
+function effortOptionsFor(provider: ProviderId, effort: Effort): ProviderOptions | undefined {
   switch (provider) {
     case 'openai':
-      return { openai: { reasoningEffort: level } };
+      return { openai: { reasoningEffort: effort } };
     case 'anthropic':
       // Claude has no "off" effort level; its lowest is `low`.
-      return { anthropic: { effort: level === 'none' ? 'low' : level } };
+      return { anthropic: { effort: effort === 'none' ? 'low' : effort } };
     default:
       // Gemini and Grok use their models' default reasoning for now.
       return undefined;
@@ -127,6 +121,6 @@ export function createProviderAdapter(
 
     languageModel: (modelId, credential) => languageModelFor(provider, modelId, credential.apiKey),
 
-    effortOptions: (modelId, effort) => effortOptionsFor(provider, modelId, effort),
+    effortOptions: (_modelId, effort) => effortOptionsFor(provider, effort),
   };
 }

@@ -1,3 +1,4 @@
+import type { TokenUsage } from '@ultimatellm/shared';
 import { APICallError } from 'ai';
 
 /**
@@ -19,6 +20,8 @@ export type ErrorKind =
   | 'server_error'
   /** Couldn't reach the provider. */
   | 'network'
+  /** The model answered, but not in the requested format (structured output). */
+  | 'invalid_output'
   /** Cancelled by the user. */
   | 'aborted'
   | 'unknown';
@@ -29,7 +32,13 @@ export class ProviderError extends Error {
   constructor(
     readonly kind: ErrorKind,
     message: string,
-    readonly details: { statusCode?: number; retryAfterMs?: number; cause?: unknown } = {},
+    readonly details: {
+      statusCode?: number;
+      retryAfterMs?: number;
+      cause?: unknown;
+      /** Tokens the failed call still used (and was billed for), when known. */
+      usage?: TokenUsage;
+    } = {},
   ) {
     super(message, { cause: details.cause });
   }

@@ -1,12 +1,6 @@
-import type { ProviderId } from '@ultimatellm/shared';
+import type { Effort, ProviderId } from '@ultimatellm/shared';
 import type { SharedV4ProviderOptions as ProviderOptions } from '@ai-sdk/provider';
 import type { LanguageModel } from 'ai';
-
-/** Our provider-neutral reasoning-effort scale (see docs/spikes/02-sdk-choice.md). */
-export type Effort = 'none' | 'low' | 'medium' | 'high' | 'max';
-
-/** Quality/cost tiers used to pick a model within a provider. */
-export type ModelTier = 'fast' | 'balanced' | 'best';
 
 export interface ApiKeyCredential {
   type: 'api_key';
@@ -30,6 +24,9 @@ export interface ProviderAdapter {
   validate(credential: Credential, signal?: AbortSignal): Promise<ValidationResult>;
   /** An AI SDK language model for `modelId`, authenticated with `credential`. */
   languageModel(modelId: string, credential: Credential): LanguageModel;
-  /** Provider-specific request options for an effort level, if the model supports it. */
+  /**
+   * Provider-specific request options for an effort level. The caller passes a
+   * level the model supports (see `ModelRegistry.supportedEffort`).
+   */
   effortOptions(modelId: string, effort: Effort): ProviderOptions | undefined;
 }

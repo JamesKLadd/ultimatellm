@@ -33,7 +33,7 @@ export function qualityBar(mode: OutputMode, category: TaskCategory): number {
  * Orders models for a task, best fit first (docs/03-orchestration.md):
  * - Cheapest: the cheapest model that clears the quality bar
  * - Fastest: the fastest model that clears the quality bar
- * - Balanced: mid-tier models that clear a higher bar, best score first;
+ * - Balanced: the cheapest mid-tier model that clears a higher bar;
  *   escalates to the cheapest stronger model only when none does
  * - Best: the highest score (cheaper first on ties)
  *
@@ -64,7 +64,7 @@ export function rankModels(
     case 'fastest':
       return [...qualified.sort(bySpeed), ...fallbacks];
     case 'balanced': {
-      const midTier = qualified.filter((model) => model.tier === 'balanced').sort(byScore);
+      const midTier = qualified.filter((model) => model.tier === 'balanced').sort(byPrice);
       const others = qualified.filter((model) => model.tier !== 'balanced').sort(byPrice);
       return [...midTier, ...others, ...fallbacks];
     }

@@ -8,14 +8,20 @@ import {
   type ManagerStatus,
 } from './accounts';
 import {
+  ApprovePlanInput,
   ChatIdInput,
   RunIdInput,
   SendMessageInput,
+  WorkspaceFileInput,
   type ChatRunEvent,
   type ChatSummary,
   type ChatWithMessages,
   type DataScope,
+  type ExportFilesResult,
+  type ModelsInfo,
   type SendMessageResult,
+  type WorkspaceFile,
+  type WorkspaceFileContent,
 } from './chats';
 import { EventChannel, InvokeChannel } from './ipc-channels';
 import { ManagerPriority } from './orchestration';
@@ -70,6 +76,21 @@ export const invokeContract = {
   [InvokeChannel.chatsSend]: { input: SendMessageInput, output: output<SendMessageResult>() },
   [InvokeChannel.chatsStop]: { input: RunIdInput, output: z.undefined() },
   [InvokeChannel.chatsRemove]: { input: ChatIdInput, output: z.undefined() },
+  [InvokeChannel.chatsApprovePlan]: { input: ApprovePlanInput, output: z.undefined() },
+
+  [InvokeChannel.workspaceList]: { input: ChatIdInput, output: output<WorkspaceFile[]>() },
+  [InvokeChannel.workspaceRead]: {
+    input: WorkspaceFileInput,
+    output: output<WorkspaceFileContent | null>(),
+  },
+  [InvokeChannel.workspaceExport]: {
+    input: ChatIdInput,
+    output: output<ExportFilesResult | null>(),
+  },
+
+  [InvokeChannel.modelsInfo]: { input: z.undefined(), output: output<ModelsInfo>() },
+  [InvokeChannel.modelsCheckForUpdate]: { input: z.undefined(), output: output<ModelsInfo>() },
+  [InvokeChannel.modelsSetAutoUpdate]: { input: z.boolean(), output: z.undefined() },
 } as const satisfies Record<string, { input: z.ZodType; output: z.ZodType }>;
 
 export type InvokeChannelName = keyof typeof invokeContract;
@@ -127,6 +148,20 @@ export interface UllApi {
     send(input: z.input<typeof SendMessageInput>): Promise<SendMessageResult>;
     stop(runId: string): Promise<void>;
     remove(id: string): Promise<void>;
+    /** Runs a plan that is waiting for review, with the user's edits. */
+    approvePlan(input: ApprovePlanInput): Promise<void>;
     onRunEvent(listener: (event: ChatRunEvent) => void): Unsubscribe;
+  };
+  workspace: {
+    list(chatId: string): Promise<WorkspaceFile[]>;
+    read(chatId: string, path: string): Promise<WorkspaceFileContent | null>;
+    /** Asks for a folder and copies the chat's files into it. Null if cancelled. */
+    export(chatId: string): Promise<ExportFilesResult | null>;
+  };
+  models: {
+    info(): Promise<ModelsInfo>;
+    /** Downloads the published model registry if it's newer. */
+    checkForUpdate(): Promise<ModelsInfo>;
+    setAutoUpdate(enabled: boolean): Promise<void>;
   };
 }
